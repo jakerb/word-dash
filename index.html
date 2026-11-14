@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Word Dash">
 <meta name="description" content="Word Dash: solo and two-player alphabet word guessing, live API words, adjustable difficulty and a race against the clock.">
 <link rel="manifest" href="./manifest.webmanifest">
-<meta name="worddash-build" content="3.4-four-step-guide">
+<meta name="worddash-build" content="3.5-native-room-share">
 <style id="worddash-multiplayer-css">
 /* Word Dash: peer-to-peer multiplayer screens. Solo mode keeps the existing layout. */
 [hidden], .mp-app[hidden], .mp-welcome[hidden] {display:none!important}
@@ -28,7 +28,10 @@ body.mp-mode {overflow:hidden}
 .mp-kicker{font-size:11px;color:var(--lime);font-weight:900;letter-spacing:1.8px;margin:0 0 9px}
 .mp-lobby-content h1,.mp-result-title{font-size:clamp(23px,3.8vw,44px);letter-spacing:-1px;line-height:1.1;margin:0 0 8px}
 .mp-muted{font-size:clamp(12px,1.4vw,15px);color:var(--muted);margin:0;line-height:1.45}
-.mp-code-row{margin:17px 0;display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:#1a223a;padding:12px;border-radius:12px;border:1px solid #3b4764}
+.mp-code-row{margin:17px 0;display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;background:#1a223a;padding:12px;border-radius:12px;border:1px solid #3b4764}
+.mp-invite-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mp-invite-actions .mp-action{min-height:42px;touch-action:manipulation}
+@media(max-width:420px){.mp-invite-actions{width:100%}.mp-invite-actions .mp-action{flex:1}}
 .mp-code{font-size:clamp(24px,4vw,36px);font-weight:1000;letter-spacing:5px;color:var(--lime);font-variant-numeric:tabular-nums}
 .mp-code-label{font-size:11px;font-weight:850;color:#bac5e2;letter-spacing:1px}
 .mp-roles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:13px 0}
@@ -764,7 +767,7 @@ body.mp-mode {overflow:hidden}
         <p class="mp-kicker">REAL-TIME TWO PLAYER</p>
         <h1 id="mpLobbyTitle">Setting up your room…</h1>
         <p class="mp-muted" id="mpLobbyIntro">Each person plays on their own screen.</p>
-        <div class="mp-code-row"><div><div class="mp-code-label">ROOM CODE</div><div class="mp-code" id="mpRoomCode">—</div></div><button type="button" class="mp-action" id="mpCopy">Copy invite</button></div>
+        <div class="mp-code-row"><div><div class="mp-code-label">ROOM CODE</div><div class="mp-code" id="mpRoomCode">—</div></div><div class="mp-invite-actions"><button type="button" class="mp-action primary" id="mpShare" aria-label="Share invite using your device">↗ Share invite</button><button type="button" class="mp-action" id="mpCopy">Copy invite</button></div></div>
         <div class="mp-config-row">
           <div class="mp-config"><label for="mpDuration">TIME LIMIT</label><select id="mpDuration"><option value="30">30 seconds</option><option value="45">45 seconds</option><option value="60">60 seconds</option><option value="90">90 seconds</option><option value="120">2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option></select></div>
           <div class="mp-config"><label for="mpDifficulty">DIFFICULTY</label><select id="mpDifficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="expert">Expert</option><option value="impossible">Impossible</option></select></div>
@@ -850,7 +853,7 @@ body.mp-mode {overflow:hidden}
   }
   function setHeader(){setConnection((mode==='host'?'Hosting':'Connected')+' · '+code);$('mpNew').hidden=!(phase==='playing'||phase==='won'||phase==='lost');}
   function renderLobby(){
-    showOnly('mpLobby');setHeader();setConfigUi();$('mpRoomCode').textContent=code||'—';
+    showOnly('mpLobby');setHeader();setConfigUi();$('mpRoomCode').textContent=code||'—';$('mpShare').hidden=mode!=='host';
     $('mpLobbyTitle').textContent=phase==='loading'?'Preparing the round…':paired()?'Ready to play!':guestConnected?'Choose your roles':'Waiting for the second player';
     $('mpLobbyIntro').textContent=mode==='host'?'Share your room code or invite link. Choose your role; both players must pick opposite roles.':'You’re connected. Choose your own role, then the host will start the round.';
     const role=getRole(),other=otherRole();
@@ -1152,13 +1155,29 @@ body.mp-mode {overflow:hidden}
     if(mode==='host'){roleHost=role;broadcast();render();}
     else if(mode==='guest'){roleGuest=role;send({type:'role',role});render();}
   }
+  function inviteLink(){
+    const link=new URL(location.href);
+    link.searchParams.set('join',code);
+    return link.href;
+  }
   function copyInvite(){
-    const link=new URL(location.href);link.searchParams.set('join',code);
-    const message=`Join my Word Dash game! Code: ${code}\n${link.href}`;
+    const message=`Join my Word Dash game! Code: ${code}\n${inviteLink()}`;
     if(navigator.clipboard?.writeText){navigator.clipboard.writeText(message).then(()=>{
       $('mpCopy').textContent='✓ Copied';setTimeout(()=>$('mpCopy').textContent='Copy invite',1700);
     }).catch(()=>prompt('Copy this invite:',message));}
     else prompt('Copy this invite:',message);
+  }
+  function shareInvite(){
+    if(mode!=='host'||!code)return;
+    if(typeof navigator.share!=='function'){copyInvite();return;}
+    // Call Web Share synchronously from the tap so iOS keeps the user gesture.
+    navigator.share({
+      title:'Word Dash — Join my game',
+      text:`Join my Word Dash game! Room code: ${code}`,
+      url:inviteLink()
+    }).catch(error=>{
+      if(error?.name!=='AbortError')copyInvite();
+    });
   }
   function startLoop(){
     setInterval(()=>{
@@ -1182,6 +1201,7 @@ body.mp-mode {overflow:hidden}
   $('mpGuess').addEventListener('click',()=>setMyRole('guesser'));
   $('mpStart').addEventListener('click',startHost);
   $('mpCopy').addEventListener('click',copyInvite);
+  $('mpShare').addEventListener('click',shareInvite);
   $('mpAgain').addEventListener('click',resetWithPrompt);
   $('mpNew').addEventListener('click',resetWithPrompt);
   ['mpDuration','mpDifficulty','mpLetters'].forEach(id=>$(id).addEventListener('change',()=>{
