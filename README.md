@@ -10,7 +10,7 @@ A fast, two-player alphabet guessing game. One player describes the word, the ot
 4. Passed and missed words return after the initial sweep. Win by turning the entire board green before the timer hits zero.
 5. Use **New round** at any time to reset with a new letter sequence and new words.
 
-Words are fetched from the free [Datamuse API](https://www.datamuse.com/api/) when it is available, with an offline word bank as a fallback. Best clearing times are stored locally in the browser, separately for each timer duration. Audio is generated using the browser's Web Audio API, and no account or backend is required.
+Words are drawn from a hand-picked list of more than 500 familiar, easy-to-describe words (like **chocolate**, **music** and **rent**). The free [Datamuse API](https://www.datamuse.com/api/) can help vary the mix, but unfamiliar API words are filtered out. Rounds avoid X, Y and Z, which are harder to play casually. Best clearing times are stored locally in the browser, separately for each timer duration. Each second has a beep, with a higher-pitched, more urgent sound for the last 10 seconds, another pitch rise at 5 seconds, and a game-over buzzer. Audio is generated using the browser's Web Audio API, and no account or backend is required.
 
 ## Run locally
 
