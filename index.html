@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Word Dash">
 <meta name="description" content="Word Dash: solo and two-player alphabet word guessing, live API words, adjustable difficulty and a race against the clock.">
 <link rel="manifest" href="./manifest.webmanifest">
-<meta name="worddash-build" content="3.3-first-play-guide">
+<meta name="worddash-build" content="3.4-four-step-guide">
 <style id="worddash-multiplayer-css">
 /* Word Dash: peer-to-peer multiplayer screens. Solo mode keeps the existing layout. */
 [hidden], .mp-app[hidden], .mp-welcome[hidden] {display:none!important}
@@ -288,6 +288,50 @@ body.mp-mode {overflow:hidden}
   .wd-guide-tip{padding:7px}
   .wd-guide-footer{margin-top:10px}
 }
+
+/* Compact multi-step guide keeps navigation visible and starts at the top. */
+.wd-guide{width:min(570px,calc(100vw - 24px));max-width:570px;scroll-behavior:auto}
+.wd-guide-page[hidden]{display:none!important}
+.wd-guide-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.wd-guide-progress{display:flex;gap:6px;margin:12px 0 17px}
+.wd-guide-progress span{height:5px;flex:1;border-radius:8px;background:#34405d}
+.wd-guide-progress span.active{background:var(--lime)}
+.wd-guide-grid{margin-top:10px}
+.wd-guide-feature{border:1px solid #34425f;background:#1c2642;border-radius:14px;padding:14px;margin:12px 0}
+.wd-guide-feature p{margin:0;font-size:14px;line-height:1.55;color:#c7d2ed}
+.wd-guide-feature strong{color:#fff}
+.wd-guide-divider{margin:14px 0;border-top:1px solid #33415f}
+.wd-guide-tip-list{grid-template-columns:1fr}
+.wd-guide-tip{padding:11px 13px}
+.wd-guide-tip strong{margin-bottom:3px}
+.wd-guide-footer{border-top:1px solid #34405d;padding-top:14px}
+.wd-guide-buttons{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.wd-guide-back{border:1px solid #4a5674;color:#e0e8fb;background:#25304d;border-radius:12px;min-height:46px;padding:10px 17px;cursor:pointer;font:inherit;font-size:14px;font-weight:850;touch-action:manipulation}
+.wd-guide-back[hidden]{display:none!important}
+.wd-guide-next{min-width:145px;min-height:46px;font-size:14px;padding:10px 18px}
+.wd-guide-panel{padding:14px}
+.wd-guide-lead{margin-bottom:10px}
+.wd-guide-footer .wd-guide-footnote{max-width:215px}
+.wd-guide-example{margin-top:9px;color:#c8d6ed;font-size:14px;line-height:1.4}
+.wd-guide-example strong{color:#fff}
+@media(max-width:650px){
+ .wd-guide-grid{grid-template-columns:1fr}
+ .wd-guide-footer{flex-direction:column;align-items:stretch}
+ .wd-guide-buttons{display:flex;width:100%}
+ .wd-guide-back,.wd-guide-next{flex:1;min-width:0}
+ .wd-guide-next{width:auto}
+ .wd-guide-inner{padding:17px}
+ .wd-guide-title{font-size:27px}
+}
+@media(min-width:651px) and (max-height:620px){
+ .wd-guide-inner{padding:13px 18px}
+ .wd-guide-progress{margin:7px 0 9px}
+ .wd-guide-lead{margin-bottom:7px}
+ .wd-guide-panel{padding:10px}
+ .wd-guide-footer{padding-top:9px;margin-top:9px}
+ .wd-guide-feature{padding:9px;margin:7px 0}
+ .wd-guide-title{font-size:27px}
+}
 </style>
 </head><body><main class="app">
     <header class="header">
@@ -295,7 +339,7 @@ body.mp-mode {overflow:hidden}
       <div class="header-actions">
         <button id="wdSoloHowto" class="ghost-btn wd-howto-trigger" type="button" title="How to play Word Dash" aria-haspopup="dialog">📖 <span class="wd-howto-label">How to play</span></button>
         <button id="duoBtn" class="ghost-btn" type="button" title="Create or join a two-player room">👥 Duo</button>
-        <button id="soundBtn" class="ghost-btn" type="button" aria-pressed="true" title="Toggle audio and spoken letter prompts">🔊 Audio on</button>
+        <button id="soundBtn" class="ghost-btn" type="button" aria-pressed="true" title="Mute countdown sounds and letter announcements" aria-label="Mute audio">🔇 Mute</button>
         <button id="resetBtn" class="ghost-btn" type="button" title="Start a fresh round">↻ New round</button>
       </div>
     </header>
@@ -656,7 +700,9 @@ body.mp-mode {overflow:hidden}
   ['duration','difficulty','letterCount'].forEach(key=>el(key).addEventListener('change',()=>{if(phase!=='playing')prepareRound();}));
   el('soundBtn').addEventListener('click',()=>{
     audioOn=!audioOn;
-    el('soundBtn').textContent=audioOn?'🔊 Audio on':'🔇 Audio off';
+    el('soundBtn').textContent=audioOn?'🔇 Mute':'🔊 Unmute';
+    el('soundBtn').setAttribute('aria-label',audioOn?'Mute audio':'Unmute audio');
+    el('soundBtn').title=audioOn?'Mute countdown sounds and letter announcements':'Unmute countdown sounds and letter announcements';
     el('soundBtn').setAttribute('aria-pressed',String(audioOn));
     if(!audioOn)stopSpeech();else ensureAudio();
   });
@@ -774,7 +820,7 @@ body.mp-mode {overflow:hidden}
     <div class="mp-code-label" style="margin-top:23px">OR JOIN SOMEONE ELSE</div>
     <form id="mpJoinForm" class="mp-join-row"><input id="mpJoinCode" class="mp-input" aria-label="Eight-character room code" maxlength="8" placeholder="ROOM CODE" autocapitalize="characters" autocomplete="off" spellcheck="false"><button class="mp-action primary" id="mpJoinButton" type="submit">Join room</button></form>
     <p id="mpWelcomeError" class="mp-error" role="status"></p>
-    <p class="mp-muted wd-network-note">🌐 Duo needs internet on both devices, <strong>not the same Wi-Fi</strong>. Some restrictive networks may block the connection. The room closes if the host leaves.</p>
+    <p class="mp-muted wd-network-note">🌐 Duo works over the internet, so both devices must have an active network connection. Some restrictive networks may block the connection.</p>
     <button id="wdWelcomeHowto" type="button" class="wd-welcome-howto" aria-haspopup="dialog">📖 How to play</button>
   </div>`;
   document.body.append(welcome);
@@ -1152,66 +1198,127 @@ body.mp-mode {overflow:hidden}
 
 </script>
 <dialog id="wdHowtoDialog" class="wd-guide" aria-labelledby="wdGuideTitle" aria-describedby="wdGuideIntro">
-  <div class="wd-guide-inner">
-    <div class="wd-guide-brand"><span class="wd-guide-kicker">⚡ Word Dash · How to play</span><span class="wd-guide-step">STEP 1 OF 2</span></div>
-    <h2 class="wd-guide-title" id="wdGuideTitle">Describe it. Guess it.<br><span class="wd-guide-highlight">Beat the clock.</span></h2>
-    <p class="wd-guide-lead" id="wdGuideIntro"><strong>You need at least two people to play.</strong> One person describes the word on screen. The other tries to guess it before the timer runs out.</p>
-    <div class="wd-guide-grid">
-      <section class="wd-guide-panel" aria-labelledby="wdClueHeading">
-        <h3 class="wd-guide-heading" id="wdClueHeading">🗣️ Give the clues</h3>
-        <p>The <strong>describer</strong> explains the highlighted word <strong>without saying the word itself</strong>. The <strong>guesser</strong> says their answer out loud.</p>
-        <h3 class="wd-guide-heading" style="margin-top:14px">⏱️ Race the countdown</h3>
-        <p>Press <strong>Start</strong> to reveal the words and begin. A beep sounds every second, getting sharper in the <strong>last 10 seconds</strong>. Get <strong>every word green</strong> to win; zero means game over!</p>
-      </section>
-      <section class="wd-guide-panel" aria-labelledby="wdControlsHeading">
-        <h3 class="wd-guide-heading" id="wdControlsHeading">🎮 Three simple controls</h3>
-        <div class="wd-guide-controls">
-          <div class="wd-guide-control green"><b>👍 Got it</b><span>Correct! Turn green and go to the next letter.</span></div>
-          <div class="wd-guide-control yellow"><b>⏭ Pass</b><span>Skip for now. Turn yellow and come back later.</span></div>
-          <div class="wd-guide-control red"><b>👎 Missed</b><span>Mark it red and try it again if there's time.</span></div>
-        </div>
-      </section>
-    </div>
-    <section class="wd-guide-tips" aria-label="Tips for tricky words">
-      <h3 class="wd-guide-heading">💡 Stuck on a tricky word? Try this</h3>
-      <div class="wd-guide-tip-list">
-        <div class="wd-guide-tip"><strong>🔊 Sounds like…</strong>“It rhymes with…” or “It sounds a bit like…”</div>
-        <div class="wd-guide-tip"><strong>🧩 Break it down</strong>“If you split it into two parts, the first sounds like…”</div>
-        <div class="wd-guide-tip"><strong>🎯 Start broad</strong>“It's an animal…” or “You'd find this in a kitchen…”</div>
-      </div>
-    </section>
-    <div class="wd-guide-footer">
-      <span class="wd-guide-footnote">Next, choose whether to play on one device or in Duo mode.</span>
-      <button class="wd-guide-next" id="wdGuideNext" type="button">Next: Choose how to play →</button>
-    </div>
+ <div class="wd-guide-inner">
+  <div class="wd-guide-top">
+   <span class="wd-guide-kicker">⚡ Word Dash · How to play</span>
+   <span class="wd-guide-step" id="wdGuideCount">STEP 1 OF 4</span>
   </div>
+  <div id="wdGuideProgress" class="wd-guide-progress" aria-label="Introduction progress"><span></span><span></span><span></span><span></span></div>
+  <h2 class="wd-guide-title" id="wdGuideTitle" tabindex="-1">Describe it. Guess it.</h2>
+  <p id="wdGuideIntro" class="wd-guide-lead">A fast word-guessing race for two or more people.</p>
+  <section class="wd-guide-page" data-wd-step="0">
+   <div class="wd-guide-feature">
+    <h3 class="wd-guide-heading">👥 Two players, two jobs</h3>
+    <p><strong>Describer:</strong> Explain the word on screen without saying the word itself.<br><strong>Guesser:</strong> Listen and shout out the answer.</p>
+   </div>
+   <div class="wd-guide-feature">
+    <h3 class="wd-guide-heading">🔤 One letter at a time</h3>
+    <p>Each answer starts with its highlighted letter. For example, for <strong>C</strong> and the word <strong>Chocolate</strong>, you might say: “A sweet brown treat you eat.”</p>
+   </div>
+  </section>
+  <section class="wd-guide-page" data-wd-step="1" hidden>
+   <div class="wd-guide-controls">
+    <div class="wd-guide-control green"><b>👍 Got it</b><span>They guessed correctly. Green! Move to the next letter.</span></div>
+    <div class="wd-guide-control yellow"><b>⏭ Pass</b><span>Skip it for now. Yellow words come back later.</span></div>
+    <div class="wd-guide-control red"><b>👎 Missed</b><span>Wrong answer? Mark it red and try again if there’s time.</span></div>
+   </div>
+   <div class="wd-guide-feature">
+    <h3 class="wd-guide-heading">⏱️ Beat the countdown</h3>
+    <p>Press <strong>Start</strong> to reveal the words and begin the timer. It beeps every second and gets more urgent in the <strong>last 10 seconds</strong>. Get every word green before zero to win!</p>
+   </div>
+  </section>
+  <section class="wd-guide-page" data-wd-step="2" hidden>
+   <div class="wd-guide-tip-list">
+    <div class="wd-guide-tip"><strong>🔊 “Sounds like…”</strong>Try a rhyme, or a word with a similar sound.</div>
+    <div class="wd-guide-tip"><strong>🧩 “Break it into parts…”</strong>“The first part sounds like…” can help with a tricky answer.</div>
+    <div class="wd-guide-tip"><strong>🎯 Start with a category</strong>“It’s a type of animal…” or “You’d find this in a kitchen…”</div>
+    <div class="wd-guide-tip"><strong>🏃 Keep moving</strong>If you’re stuck, press <strong>Pass</strong> and circle back if there’s time.</div>
+   </div>
+  </section>
+  <section class="wd-guide-page" data-wd-step="3" hidden>
+   <div class="wd-guide-grid">
+    <div class="wd-guide-panel">
+     <h3 class="wd-guide-heading">📱 One device</h3>
+     <p>Play together using one screen. The describer sees the words and taps the answer buttons.</p>
+    </div>
+    <div class="wd-guide-panel">
+     <h3 class="wd-guide-heading">👥 Duo mode</h3>
+     <p>Play on two devices. One creates a room; the other joins with a code. The guesser only sees the letter.</p>
+    </div>
+   </div>
+   <div class="wd-guide-feature"><p>🌐 <strong>Duo works over the internet, so both devices must have an active network connection.</strong></p></div>
+  </section>
+  <div class="wd-guide-footer">
+   <span id="wdGuideNote" class="wd-guide-footnote">Tap Next to learn the controls.</span>
+   <div class="wd-guide-buttons">
+    <button id="wdGuideBack" type="button" class="wd-guide-back" hidden>← Back</button>
+    <button id="wdGuideNext" type="button" class="wd-guide-next">Next →</button>
+   </div>
+  </div>
+ </div>
 </dialog>
 <script id="worddash-guide-js">
 (() => {
-  'use strict';
-  const KEY='worddash-howto-seen-v1';
-  const dialog=document.getElementById('wdHowtoDialog');
-  const next=document.getElementById('wdGuideNext');
-  if(!dialog||!next)return;
-  let firstVisit=false;
-  try{firstVisit=localStorage.getItem(KEY)!=='yes';}catch(_){firstVisit=true;}
-  const open=()=>{
-    if(dialog.open)return;
-    next.textContent=firstVisit?'Next: Choose how to play →':'Got it ✓';
-    dialog.showModal();
-    next.focus({preventScroll:true});
-  };
-  const close=()=>{
-    try{localStorage.setItem(KEY,'yes');}catch(_){}
-    firstVisit=false;
-    dialog.close();
-  };
-  for(const id of ['wdSoloHowto','wdDuoHowto','wdWelcomeHowto']){
-    document.getElementById(id)?.addEventListener('click',open);
+ 'use strict';
+ const KEY='worddash-howto-seen-v1';
+ const dialog=document.getElementById('wdHowtoDialog');
+ const heading=document.getElementById('wdGuideTitle');
+ const intro=document.getElementById('wdGuideIntro');
+ const count=document.getElementById('wdGuideCount');
+ const progress=[...document.querySelectorAll('#wdGuideProgress span')];
+ const pages=[...document.querySelectorAll('[data-wd-step]')];
+ const back=document.getElementById('wdGuideBack');
+ const next=document.getElementById('wdGuideNext');
+ const note=document.getElementById('wdGuideNote');
+ if(!dialog||!heading||!next||pages.length!==4)return;
+ let firstVisit;
+ try{firstVisit=localStorage.getItem(KEY)!=='yes';}catch(_){firstVisit=true;}
+ let step=0;
+ const steps=[
+  {title:'Describe it. Guess it.',intro:'You need at least two people to play. One gives clues; the other guesses.',note:'Tap Next to learn the controls.'},
+  {title:'Know your buttons.',intro:'The describer controls each answer. Pass and Missed words return for another try.',note:'Every word needs to turn green.'},
+  {title:'Tricks for tricky words.',intro:'Try these clues when the answer isn’t coming to mind.',note:'Don’t say the answer itself!'},
+  {title:'Choose how to play.',intro:'One screen together, or two connected devices — you decide.',note:'Ready to start playing?'}
+ ];
+ function display(index){
+  step=Math.min(3,Math.max(0,index));
+  const data=steps[step];
+  heading.textContent=data.title;
+  intro.textContent=data.intro;
+  count.textContent='STEP '+(step+1)+' OF 4';
+  note.textContent=data.note;
+  pages.forEach((page,i)=>{page.hidden=i!==step;});
+  progress.forEach((part,i)=>part.classList.toggle('active',i<=step));
+  back.hidden=step===0;
+  next.textContent=step===3?'Choose how to play →':'Next →';
+  // Focusing the bottom button was scrolling the old modal to the bottom on open.
+  // Keep the top heading focused and reset the scroll on every page instead.
+  dialog.scrollTop=0;
+  heading.focus({preventScroll:true});
+  requestAnimationFrame(()=>{if(dialog.open)dialog.scrollTop=0;});
+ }
+ function open(){
+  if(dialog.open)return;
+  step=0;
+  dialog.scrollTop=0;
+  dialog.showModal();
+  display(0);
+ }
+ function close(){
+  try{localStorage.setItem(KEY,'yes');}catch(_){}
+  firstVisit=false;
+  dialog.close();
+  if(!window.WordDashMultiplayer?.isActive?.()){
+   window.WordDashMultiplayer?.showWelcome?.();
   }
-  next.addEventListener('click',close);
-  dialog.addEventListener('cancel',event=>{if(firstVisit)event.preventDefault();});
-  if(firstVisit)open();
+ }
+ ['wdSoloHowto','wdDuoHowto','wdWelcomeHowto'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('click',open);
+ });
+ back.addEventListener('click',()=>display(step-1));
+ next.addEventListener('click',()=>step<3?display(step+1):close());
+ dialog.addEventListener('cancel',event=>{if(firstVisit)event.preventDefault();});
+ if(firstVisit)open();
 })();
 </script>
 </body></html>
