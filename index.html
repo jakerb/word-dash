@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Word Dash">
 <meta name="description" content="Word Dash: solo and two-player alphabet word guessing, live API words, adjustable difficulty and a race against the clock.">
 <link rel="manifest" href="./manifest.webmanifest">
-<meta name="worddash-build" content="3-multiplayer">
+<meta name="worddash-build" content="3.1-multiplayer">
 <style id="worddash-multiplayer-css">
 /* Word Dash: peer-to-peer multiplayer screens. Solo mode keeps the existing layout. */
 [hidden], .mp-app[hidden], .mp-welcome[hidden] {display:none!important}
@@ -622,7 +622,7 @@ body.mp-mode {overflow:hidden}
   let words = [], statuses = [], current = -1, deadline = 0, elapsedStart = 0, remainingMs = 60000;
   let roundGeneration = 0, fetchController = null, timer = 0, lastBroadcast = 0, eventSeq = 0;
   let remote = null, remoteTime = 0, lastSpeechEvent = 0, lastBeepSecond = null;
-  let libraryPromise = null, winnerCelebrated = false, closing = false;
+  let libraryPromise = null, winnerCelebrated = false, closing = false, lastFeedback = null;
 
   const shell = document.createElement('section');
   shell.id = 'mpShell'; shell.className = 'mp-app'; shell.hidden = true;
@@ -771,6 +771,9 @@ body.mp-mode {overflow:hidden}
       $('mpWordGrid').replaceChildren();
       const i=Math.max(0,snapshot.current);const letter=snapshot.letters?.[i]||'—';
       $('mpBigLetter').textContent=letter;
+      $('mpGuesserHint').textContent=lastFeedback
+        ? `Previous ${lastFeedback.letter}: ${lastFeedback.status==='correct'?'✓ correct':lastFeedback.status==='skipped'?'↷ passed':'✕ missed'} · Now ${letter}`
+        : 'Listen to the clue. Your teammate controls the next letter.';
       const status=snapshot.statuses?.[i]||'pending';
       $('mpBigStatus').className='mp-big-status'+(status==='skipped'?' skipped':status==='incorrect'?' incorrect':'');
       $('mpBigStatus').textContent=status==='skipped'?'PASSED — TRY AGAIN':status==='incorrect'?'MISSED — TRY AGAIN':'UNANSWERED';
@@ -813,7 +816,7 @@ body.mp-mode {overflow:hidden}
   function resetForNext(){
     if(mode!=='host')return;
     stopHostRound();roleHost=null;roleGuest=null;words=[];statuses=[];current=-1;
-    eventSeq=0;lastSpeechEvent=0;lastBeepSecond=null;winnerCelebrated=false;
+    eventSeq=0;lastSpeechEvent=0;lastBeepSecond=null;winnerCelebrated=false;lastFeedback=null;
     phase='lobby';remainingMs=config.duration*1000;
     broadcast();render();
   }
@@ -870,6 +873,7 @@ body.mp-mode {overflow:hidden}
     if(mode!=='host'||phase!=='playing'||!['correct','skipped','incorrect'].includes(status))return;
     if(performance.now()>=deadline){finishHost(false);return;}
     const prev=current;statuses[prev]=status;
+    if(roleHost==='guesser')lastFeedback={letter:words[prev].letter,status};
     if(statuses.every(s=>s==='correct')){finishHost(true);return;}
     let next=-1;
     for(let i=prev+1;i<words.length;i++)if(statuses[i]==='pending'){next=i;break;}
@@ -890,6 +894,10 @@ body.mp-mode {overflow:hidden}
     if(mode!=='guest'||!data||data.version!==VERSION)return;
     const oldPhase=remote?.phase;
     const oldEvent=remote?.eventSeq||0;
+    if(remote?.phase==='playing'&&data.phase==='playing'&&remote.eventSeq!==data.eventSeq&&remote.current!==data.current){
+      const prevIndex=remote.current;
+      if(prevIndex>=0)lastFeedback={letter:remote.letters?.[prevIndex],status:data.statuses?.[prevIndex]};
+    }
     remote=data;remoteTime=performance.now();
     phase=data.phase;config=data.config;roleHost=data.hostRole;roleGuest=data.guestRole;
     guestConnected=true;
@@ -898,7 +906,7 @@ body.mp-mode {overflow:hidden}
       playLetter(letter);
     }
     if(data.phase!=='playing')lastBeepSecond=null;
-    if(data.phase==='lobby'){winnerCelebrated=false;}
+    if(data.phase==='lobby'){winnerCelebrated=false;lastFeedback=null;}
     render();
   }
   function handleMessage(data){
@@ -962,7 +970,7 @@ body.mp-mode {overflow:hidden}
     setWelcomeError('');
     active=true;mode=creating?'host':'guest';closing=false;roleHost=null;roleGuest=null;guestConnected=false;remote=null;
     words=[];statuses=[];current=-1;phase='lobby';eventSeq=0;winnerCelebrated=false;
-    code=creating?newCode():requested;
+    lastFeedback=null;code=creating?newCode():requested;
     config={duration:Number($('duration').value)||60,difficulty:$('difficulty').value||'easy',letterCount:Number($('letterCount').value)||10};
     document.body.classList.add('mp-mode');$('mpShell').hidden=false;welcome.hidden=true;
     window.WordDashSolo?.pause?.();
