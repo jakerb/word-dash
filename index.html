@@ -339,7 +339,7 @@ body.mp-mode {overflow:hidden}
       <div class="header-actions">
         <button id="wdSoloHowto" class="ghost-btn wd-howto-trigger" type="button" title="How to play Word Dash" aria-haspopup="dialog">📖 <span class="wd-howto-label">How to play</span></button>
         <button id="duoBtn" class="ghost-btn" type="button" title="Create or join a two-player room">👥 Duo</button>
-        <button id="soundBtn" class="ghost-btn" type="button" aria-pressed="true" title="Mute countdown sounds and letter announcements" aria-label="Mute audio">🔇 Mute</button>
+        <button id="soundBtn" class="ghost-btn" type="button" aria-pressed="true" title="Mute countdown sounds and letter announcements" aria-label="Mute audio">🔊 Mute</button>
         <button id="resetBtn" class="ghost-btn" type="button" title="Start a fresh round">↻ New round</button>
       </div>
     </header>
@@ -700,7 +700,7 @@ body.mp-mode {overflow:hidden}
   ['duration','difficulty','letterCount'].forEach(key=>el(key).addEventListener('change',()=>{if(phase!=='playing')prepareRound();}));
   el('soundBtn').addEventListener('click',()=>{
     audioOn=!audioOn;
-    el('soundBtn').textContent=audioOn?'🔇 Mute':'🔊 Unmute';
+    el('soundBtn').textContent=audioOn?'🔊 Mute':'🔇 Unmute';
     el('soundBtn').setAttribute('aria-label',audioOn?'Mute audio':'Unmute audio');
     el('soundBtn').title=audioOn?'Mute countdown sounds and letter announcements':'Unmute countdown sounds and letter announcements';
     el('soundBtn').setAttribute('aria-pressed',String(audioOn));
