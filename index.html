@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Word Dash">
 <meta name="description" content="Word Dash: solo and two-player alphabet word guessing, live API words, adjustable difficulty and a race against the clock.">
 <link rel="manifest" href="./manifest.webmanifest">
-<meta name="worddash-build" content="3.1-multiplayer">
+<meta name="worddash-build" content="3.2-easy-single-words">
 <style id="worddash-multiplayer-css">
 /* Word Dash: peer-to-peer multiplayer screens. Solo mode keeps the existing layout. */
 [hidden], .mp-app[hidden], .mp-welcome[hidden] {display:none!important}
@@ -276,7 +276,7 @@ body.mp-mode {overflow:hidden}
         <button class="action-btn wrong" id="wrongBtn" type="button"><span class="emoji" aria-hidden="true">👎</span>Missed</button>
       </div>
     </div>
-    <footer class="footer">Words sourced live from <a href="https://www.datamuse.com/api/" target="_blank" rel="noopener noreferrer">Datamuse</a> · Recent words remembered on this device · Works online</footer>
+    <footer class="footer">Single-word answers sourced live from <a href="https://www.datamuse.com/api/" target="_blank" rel="noopener noreferrer">Datamuse</a> · Easy favours common nouns · Works online</footer>
   </main>
   <canvas id="confetti" aria-hidden="true"></canvas>
   <div id="announcer" class="visually-hidden" role="status" aria-live="polite"></div><script id="worddash-script">(() => {
@@ -380,7 +380,8 @@ body.mp-mode {overflow:hidden}
   function valid(item,letter){
     if(!item||typeof item.word!=='string')return false;
     const w=item.word.trim(),low=w.toLowerCase();
-    if(!low.startsWith(letter.toLowerCase())||w.length<3||w.length>27||!/^[a-z]+(?:[ '-][a-z]+){0,2}$/i.test(w))return false;
+    // Every difficulty uses one standalone word: no spaces, hyphens, apostrophes or numbers.
+    if(!low.startsWith(letter.toLowerCase())||!(/^[a-z]{2,27}$/i.test(w)))return false;
     if(DISALLOWED.test(w)||FUNCTION_WORDS.has(low))return false;
     if(/(?:'s|ing's|ly's)$/i.test(w))return false;
     const tags=item.tags||[];
@@ -392,18 +393,36 @@ body.mp-mode {overflow:hidden}
     if(!all.length)return [];
     // Rank by API popularity and frequency rather than making word length the definition of difficulty.
     const ranked=all.map((item,i)=>({...item,frequency:freq(item),rank:(i+1)/all.length}));
+    if(mode==='easy'){
+      // Favour high-frequency, recognisable nouns (animals, food, objects, places)
+      // over abstract vocabulary, verbs and adjectives. API-only: no answer bank.
+      const nouns=ranked.filter(item=>
+        (item.tags||[]).includes('n') &&
+        item.word.length<=16 &&
+        (!Number.isFinite(item.numSyllables)||item.numSyllables<=4)
+      );
+      // Build an approachable pool that still has enough variety between rounds.
+      // For rarer letters like X and Z, gradually relax frequency rather than
+      // filling Easy with random words from the bottom of the dictionary.
+      const bands=[
+        nouns.filter(item=>item.frequency>=6 && item.rank<=.35).slice(0,90),
+        nouns.filter(item=>item.frequency>=2 && item.rank<=.35).slice(0,70),
+        nouns.filter(item=>item.frequency>=.45 && item.rank<=.30).slice(0,45),
+        nouns.slice(0,24)
+      ];
+      return bands.find(band=>band.length>=12) || bands.findLast(band=>band.length>0) ||
+        ranked.filter(item=>item.rank<=.08).slice(0,12);
+    }
     let result=ranked.filter(item=>{
       const f=Number.isFinite(item.frequency)?item.frequency:0;
       const r=item.rank;
-      const pos=item.tags||[];
-      if(mode==='easy')return (f>=2.5||r<.22)&&r<.52&&(pos.includes('n')||pos.includes('v')||pos.includes('adj'));
-      if(mode==='medium')return (f>=.7&&f<=35)||r>=.18&&r<=.58;
-      if(mode==='hard')return (f>=.12&&f<=5)||r>=.46&&r<=.81;
+      if(mode==='medium')return (f>=.7&&f<=35)||(r>=.18&&r<=.58);
+      if(mode==='hard')return (f>=.12&&f<=5)||(r>=.46&&r<=.81);
       if(mode==='expert')return (f>=.015&&f<=1.6)||r>=.68;
       return (f>0&&f<=.3)||r>=.86;
     });
-    // Sparse letters can be tougher than the selected difficulty; still use only API words.
-    if(result.length<7){const start={easy:0,medium:.15,hard:.38,expert:.60,impossible:.78}[mode];result=ranked.filter(item=>item.rank>=start);}
+    // Higher difficulties can broaden their selection if the API offers few options.
+    if(result.length<7){const start={medium:.15,hard:.38,expert:.60,impossible:.78}[mode];result=ranked.filter(item=>item.rank>=start);}
     return result.length?result:ranked;
   }
   async function fetchLetter(letter,signal,mode=difficulty){
@@ -411,7 +430,7 @@ body.mp-mode {overflow:hidden}
     if(mode==='expert'||mode==='impossible')plans.push({sp:letter.toLowerCase()+'????*',max:1000});
     const sets=[];
     for(const plan of plans){
-      const url='https://api.datamuse.com/words?'+new URLSearchParams({...plan,md:'pf'}).toString();
+      const url='https://api.datamuse.com/words?'+new URLSearchParams({...plan,md:mode==='easy'?'pfs':'pf'}).toString();
       let response;
       try{response=await fetch(url,{signal,cache:'no-store'});}catch(err){if(signal.aborted)throw err;continue;}
       if(!response.ok)continue;
