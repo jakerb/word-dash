@@ -15,7 +15,7 @@ A fast two-player word-guessing game with consecutive alphabet letters, a countd
 9. When you win or run out of time, both players see the outcome and all words.
 10. **New game** resets the roles on both connected devices, while keeping the same room.
 
-The original one-device mode remains available. Words are sourced from the [Datamuse API](https://www.datamuse.com/api/); there is no hardcoded fallback word bank. The app remembers recently used words locally to reduce repetition.
+The original one-device mode remains available. Words are sourced from the [Datamuse API](https://www.datamuse.com/api/); there is no hardcoded fallback word bank. **All difficulties now use single-word answers only** (no spaces, hyphens, or phrases). **Easy prioritises familiar, high-frequency nouns** instead of choosing random dictionary words; for uncommon starting letters, it gently broadens the selection while staying API-only. The app remembers recently used words locally to reduce repetition.
 
 ## Technical design
 
