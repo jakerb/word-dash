@@ -4,7 +4,7 @@ A fast two-player word-guessing game with consecutive alphabet letters, a countd
 
 ## How to play
 
-1. Open [Word Dash](https://jakerb.github.io/word-dash/). First-time players see a **four-step How to play guide**: the goal, controls and timer, clue-giving tips, and choosing One Device or Duo. Use **Back** and **Next** to navigate; finishing opens the game-mode selector. The modal opens at the top and won't auto-appear after you've completed it on that device. Reopen it using **How to play** on the mode picker or the **📖 / ❔** buttons in the game.
+1. Open [Word Dash](https://word-dash.site/). First-time players see a **four-step How to play guide**: the goal, controls and timer, clue-giving tips, and choosing One Device or Duo. Use **Back** and **Next** to navigate; finishing opens the game-mode selector. The modal opens at the top and won't auto-appear after you've completed it on that device. Reopen it using **How to play** on the mode picker or the **📖 / ❔** buttons in the game.
 2. Choose **Play on one device**, **Create a two-player room** or **Join room**.
 3. For a two-device game, the host creates a room and taps **Share invite** to open the phone or tablet's native share sheet (Messages, WhatsApp, AirDrop, etc.). The invite includes the room URL and code. **Copy invite** remains available, and is used as a fallback if native sharing is unsupported.
 4. Both players choose their role for the round: **Describer** or **Guesser**. The selections must be different.
@@ -15,7 +15,7 @@ A fast two-player word-guessing game with consecutive alphabet letters, a countd
 9. When you win or run out of time, both players see the outcome and all words.
 10. **New game** resets the roles on both connected devices, while keeping the same room.
 
-The original one-device mode remains available. Words are sourced from the [Datamuse API](https://www.datamuse.com/api/); there is no hardcoded fallback word bank. **All difficulties now use single-word answers only** (no spaces, hyphens, or phrases). **Easy prioritises familiar, high-frequency nouns** instead of choosing random dictionary words; for uncommon starting letters, it gently broadens the selection while staying API-only. The app remembers recently used words locally to reduce repetition.
+The original one-device mode remains available. Words are sourced from the [Datamuse API](https://www.datamuse.com/api/); there is no hardcoded fallback word bank. Duo loads words with a lighter first request, retries with alternative API requests when necessary, and displays loading progress and specific failure details on both devices so a failing letter cannot go unnoticed. **All difficulties now use single-word answers only** (no spaces, hyphens, or phrases). **Easy prioritises familiar, high-frequency nouns** instead of choosing random dictionary words; for uncommon starting letters, it gently broadens the selection while staying API-only. The app remembers recently used words locally to reduce repetition.
 
 The audio button uses the shorter labels **Mute** and **Unmute** (for countdown beeps and spoken letters).
 
@@ -33,8 +33,8 @@ Install from your browser's **Add to Home Screen** or **Install App** option. Th
 
 ## GitHub Pages
 
-Under **Settings → Pages**, select **Deploy from a branch → main → /(root)**. The game lives at:
+Under **Settings → Pages**, select **Deploy from a branch → main → /(root)**. The game is available on the custom domain:
 
-https://jakerb.github.io/word-dash/
+https://word-dash.site/
 
 No build step or API key is required for the current setup. Future changes to Datamuse's API terms or PeerJS Cloud availability may require configuration or another provider.
