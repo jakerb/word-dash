@@ -4,7 +4,7 @@ A fast two-player word-guessing game with consecutive alphabet letters, a countd
 
 ## How to play
 
-1. Open [Word Dash](https://jakerb.github.io/word-dash/).
+1. Open [Word Dash](https://jakerb.github.io/word-dash/). On the first visit, a short **How to play** guide explains the rules, answer buttons, countdown and clue-giving tips. Click **Next** to choose your mode. The guide is remembered on this device and can be reopened using **How to play** on the mode picker or the **📖 / ❔** buttons in the game.
 2. Choose **Play on one device**, **Create a two-player room** or **Join room**.
 3. For a two-device game, the host creates a room and shares the eight-character code or invitation URL.
 4. Both players choose their role for the round: **Describer** or **Guesser**. The selections must be different.
@@ -23,7 +23,7 @@ The site runs entirely on **GitHub Pages**, which is static hosting and does not
 
 The room code is an unguessable random eight-character string. Rooms are ephemeral: both browser tabs must stay open, and a host leaving closes the room. This is intended for friendly games, not anti-cheating competitions; the host's browser inherently knows the words and can inspect them using developer tools.
 
-**Reliability caveat:** the free PeerJS Cloud is a shared public service and is not guaranteed. Some restrictive networks may block peer-to-peer connections. For production-grade matchmaking or reconnection guarantees, switch to a managed realtime backend or self-hosted PeerServer with TURN support.
+**Networking:** Duo works between devices on different Wi-Fi or mobile networks, so **the same Wi-Fi is not required**. Both devices need an internet connection. **Reliability caveat:** the free PeerJS Cloud is a shared public service and is not guaranteed. Some restrictive networks may block peer-to-peer connections. For production-grade matchmaking or reconnection guarantees, switch to a managed realtime backend or self-hosted PeerServer with TURN support.
 
 ## PWA and updates
 
