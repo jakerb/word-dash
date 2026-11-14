@@ -1,12 +1,18 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0c1022">
-  <meta name="description" content="Word Dash: a fast-paced, two-player word guessing game. Explain ten words, beat the clock, and set your best time.">
-  <title>Word Dash — The two-player word race</title>
-  <style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0c1022">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Word Dash">
+<meta name="description" content="Word Dash: live API words, five difficulty levels, up to 26 alphabet letters, and a race against the clock.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>Word Dash — Beat the clock</title>
+<style>
     :root { color-scheme:dark; --bg:#0c1022; --surface:#141a30; --surface-2:#1c2440; --border:#2d3653; --muted:#a2abc8; --text:#f5f6ff; --lime:#c0f96a; --green:#5bea9a; --yellow:#ffd36b; --red:#ff777d; --purple:#988bff; --shadow:0 20px 70px rgba(0,0,0,.24); }
     * { box-sizing:border-box; }
     html { scroll-behavior:smooth; }
@@ -15,461 +21,503 @@
     button { cursor:pointer; -webkit-tap-highlight-color:transparent; }
     button:disabled { cursor:not-allowed; opacity:.48; }
     button:focus-visible, select:focus-visible {outline:3px solid var(--lime);outline-offset:3px;}
-    .app {max-width:1120px;margin:0 auto;padding:24px 24px 130px;}
-    .header {display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px;}
-    .brand {font-weight:1000; letter-spacing:-1.2px;font-size:24px;white-space:nowrap;}
-    .brand b {color:var(--lime);}
-    .brand-dot {color:var(--lime);}
-    .header-actions {display:flex;gap:8px;}
-    .ghost-btn {border:1px solid var(--border);background:rgba(29,36,62,.72);color:var(--text);border-radius:12px;min-height:42px;padding:0 15px;font-weight:750;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;}
-    .ghost-btn:hover {background:#2a3453;}
-    .hero {padding:5px 0 23px;}
-    .eyebrow {color:var(--lime);font-size:11px;font-weight:900;letter-spacing:2.2px;margin:0 0 13px;}
-    h1 {font-weight:1000;font-size:clamp(35px,5.5vw,68px);line-height:.98;letter-spacing:-2.7px;margin:0 0 14px;}
-    h1 em {font-style:normal;color:var(--lime);}
-    .hero p.sub {margin:0;color:var(--muted);line-height:1.55;font-size:15px;max-width:580px;}
-    .score-strip {display:grid;grid-template-columns:1.25fr 1fr 1fr auto;align-items:stretch;gap:10px;margin-bottom:16px;position:sticky;top:9px;z-index:10;}
-    .metric,.config {background:rgba(20,26,48,.96);border:1px solid var(--border);border-radius:16px;min-height:93px;padding:15px 17px;backdrop-filter:blur(16px);}
-    .metric small, .config label {display:block;font-size:10px;letter-spacing:1.55px;font-weight:900;color:var(--muted);margin-bottom:5px;}
-    .metric-value {display:block;font-size:30px;line-height:1.1;font-weight:950;letter-spacing:-1px;font-variant-numeric:tabular-nums;}
-    .metric .secondary {font-size:17px;color:var(--muted);}
-    .metric.timer {border-color:rgba(192,249,106,.35);}
-    .metric.timer .metric-value {color:var(--lime);}
-    .metric.timer.urgent .metric-value {color:var(--red);animation:pulse .8s infinite alternate;}
-    .config {display:flex;flex-direction:column;justify-content:center;min-width:135px;}
-    .config select {width:100%;border:0;background:transparent;color:var(--text);font-weight:850;font-size:17px;outline:none;padding:0;cursor:pointer;}
-    .config option {background:var(--surface);}
-    @keyframes pulse {from{opacity:1}to{opacity:.55}}
-    .game-layout {display:grid;grid-template-columns:minmax(290px,.72fr) minmax(0,1.28fr);gap:16px;align-items:start;}
-    .sidebar {display:flex;flex-direction:column;gap:16px;}
-    .panel {background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);}
-    .state-card {padding:27px;}
-    .state-emoji {width:55px;height:55px;display:grid;place-items:center;border-radius:15px;background:#292f46;font-size:27px;margin-bottom:20px;}
-    .state-card h2 {font-size:26px;letter-spacing:-.6px;margin:0 0 9px;line-height:1.12;}
-    .state-card p {color:var(--muted);line-height:1.6;font-size:14px;margin:0 0 22px;min-height:45px;}
-    .primary-btn {width:100%;padding:17px 20px;background:var(--lime);border:none;border-radius:14px;color:#17200e;font-weight:950;font-size:17px;box-shadow:0 7px 0 #88b743;transition:transform .1s, box-shadow .1s;}
-    .primary-btn:not(:disabled):active {transform:translateY(5px);box-shadow:0 2px 0 #88b743;}
-    .primary-btn:not(:disabled):hover {background:#d2ff91;}
-    .tiny-info {display:flex;align-items:center;gap:8px;font-size:12px;margin-top:18px;color:var(--muted);}
-    .tiny-dot {width:7px;height:7px;flex:0 0 auto;background:var(--yellow);border-radius:50%;}
-    .tiny-dot.live {background:var(--green);}
-    .rules {padding:22px 25px;}
-    .rules h3 {margin:0 0 14px;font-size:14px;letter-spacing:.4px;}
-    .rules p {margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.55;}
-    .rules p:last-child {margin-bottom:0;}
-    .rules strong {color:var(--text);}
-    .board {padding:18px;min-width:0;}
-    .board-head {display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:6px 7px 16px;}
-    .board-head h2 {margin:0 0 5px;font-size:18px;font-weight:900;letter-spacing:-.3px;}
-    .board-head p {font-size:12px;color:var(--muted);margin:0;}
-    .source-pill {display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;border-radius:100px;background:#28334b;color:#bac2dc;padding:7px 10px;font-size:10px;font-weight:800;letter-spacing:.3px;}
-    .rows {display:flex;flex-direction:column;gap:7px;}
-    .word-row {display:flex;align-items:center;gap:14px;min-height:64px;padding:8px 15px;border-radius:13px;border:1px solid #303951;background:#1b233b;transition:background .16s,border-color .16s, transform .16s;scroll-margin-top:123px;}
-    .word-row .letter {width:45px;height:45px;flex:0 0 45px;border-radius:10px;background:#303a55;color:#c1cbeb;display:grid;place-items:center;font-size:22px;font-weight:950;}
-    .word-row .word {min-width:0;flex:1;overflow-wrap:anywhere;font-size:19px;line-height:1.1;font-weight:850;letter-spacing:-.45px;}
-    .word-row .word.masked {color:#737e9e;letter-spacing:2px;font-size:14px;font-weight:750;}
-    .word-row .tag {min-width:60px;text-align:right;font-weight:950;letter-spacing:.4px;font-size:10px;color:#8591b2;}
-    .word-row.active {border-color:var(--purple);background:#2b2b56;box-shadow:inset 4px 0 var(--purple),0 0 0 1px rgba(152,139,255,.1);transform:translateX(2px);}
-    .word-row.active .letter {background:var(--purple);color:#17142a;}
-    .word-row.active .tag {color:#c5bfff;}
-    .word-row.correct {background:rgba(39,131,85,.17);border-color:rgba(91,234,154,.45);}
-    .word-row.correct .letter {background:var(--green);color:#0d2e1d;}
-    .word-row.correct .tag {color:var(--green);}
-    .word-row.skipped {background:rgba(175,119,24,.18);border-color:rgba(255,211,107,.48);}
-    .word-row.skipped .letter {background:var(--yellow);color:#392606;}
-    .word-row.skipped .tag {color:var(--yellow);}
-    .word-row.incorrect {background:rgba(191,67,83,.17);border-color:rgba(255,119,125,.46);}
-    .word-row.incorrect .letter {background:var(--red);color:#3b121a;}
-    .word-row.incorrect .tag {color:var(--red);}
-    .word-row.active.correct {border-color:var(--purple);}
-    .action-dock {position:fixed;bottom:0;left:0;right:0;z-index:20;display:none;background:linear-gradient(to top,rgba(12,16,34,1) 72%,rgba(12,16,34,.92));padding:12px max(18px,env(safe-area-inset-left)) calc(13px + env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-right));box-shadow:0 -12px 45px rgba(0,0,0,.25);}
-    .action-dock.visible {display:block;}
-    .dock-inner {display:grid;grid-template-columns:1fr .8fr 1fr;gap:10px;max-width:680px;margin:0 auto;}
-    .action-btn {min-height:64px;border-radius:16px;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-weight:950;font-size:15px;transition:transform .1s,filter .1s;}
-    .action-btn:hover {filter:brightness(1.12);}
-    .action-btn:active {transform:scale(.96);}
-    .action-btn .emoji {font-size:25px;line-height:1.25;}
-    .action-btn.correct {background:var(--green);color:#082b19;}
-    .action-btn.pass {background:var(--yellow);color:#332303;}
-    .action-btn.wrong {background:var(--red);color:#391218;}
-    .footer {text-align:center;color:#7582a5;font-size:11px;padding-top:18px;}
-    .footer a {color:#aeb8d5;}
-    .visually-hidden {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
-    #confetti {pointer-events:none;position:fixed;inset:0;width:100vw;height:100vh;z-index:50;display:none;}
-    @media(max-width:760px){
-      .app {padding:14px 12px 124px;}
-      .header {margin-bottom:20px;}
-      .brand {font-size:22px;}
-      .ghost-btn {font-size:12px;padding:0 10px;min-height:38px;}
-      .hero {padding-bottom:18px;}
-      .hero h1 {font-size:38px;letter-spacing:-1.8px;}
-      .hero p.sub {font-size:13px;}
-      .score-strip {grid-template-columns:1.2fr 1fr 1fr;gap:6px;top:4px;}
-      .metric {padding:12px 10px;min-height:76px;border-radius:12px;}
-      .metric small {font-size:8px;letter-spacing:.55px;white-space:nowrap;}
-      .metric-value {font-size:25px;}
-      .metric .secondary {font-size:14px;}
-      .config {grid-column:1/-1;padding:10px 12px;min-height:0;flex-direction:row;align-items:center;justify-content:space-between;border-radius:12px;}
-      .config label {margin:0;font-size:10px;}
-      .config select {width:auto;font-size:14px;text-align:right;}
-      .game-layout {display:flex;flex-direction:column;gap:12px;}
-      .sidebar {width:100%;display:contents;}
-      .state-card {order:-1;padding:19px 20px;width:100%;}
-      .state-emoji {width:44px;height:44px;font-size:23px;margin:0 0 12px;}
-      .state-card h2 {font-size:22px;}
-      .state-card p {min-height:0;margin-bottom:13px;}
-      .tiny-info {margin-top:13px;}
-      .rules {order:3;width:100%;padding:18px 20px;}
-      .board {width:100%;padding:10px;order:2;}
-      .board-head {padding:7px 6px 12px;}
-      .board-head h2 {font-size:16px;}
-      .source-pill {font-size:9px;}
-      .word-row {min-height:55px;gap:10px;padding:6px 10px;scroll-margin-top:158px;}
-      .word-row .letter {width:40px;height:40px;flex-basis:40px;font-size:20px;}
-      .word-row .word {font-size:17px;}
-      .word-row .tag {font-size:9px;min-width:45px;}
-      .action-btn {min-height:62px;font-size:13px;border-radius:12px;}
-      .dock-inner {gap:7px;}
-      .playing .hero {display:none;}
-      .playing .state-card {display:none;}
-      .playing .rules {display:none;}
-      .playing .header {margin-bottom:9px;}
-      .playing .score-strip {margin-bottom:10px;}
-      .playing .config {display:none;}
+
+    * {-webkit-tap-highlight-color:transparent;}
+    html,body {width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;}
+    button,select,a {touch-action:manipulation;}
+    button:disabled {cursor:not-allowed;opacity:.5;}
+    button:focus-visible,select:focus-visible{outline:3px solid var(--lime);outline-offset:2px;}
+    .app {width:100%;max-width:1680px;height:100vh;height:100dvh;min-height:0;margin:auto;padding:clamp(8px,1.4vh,18px);padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));display:flex;flex-direction:column;gap:clamp(6px,1vh,12px);overflow:hidden;}
+    .header {height:39px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+    .brand {font-weight:1000;letter-spacing:-1.4px;font-size:clamp(19px,2.2vw,27px);white-space:nowrap;}
+    .brand b,.brand-dot{color:var(--lime);}
+    .header-actions{display:flex;gap:7px;align-items:center;}
+    .ghost-btn{background:#1c2440;border:1px solid #3d4768;color:var(--text);border-radius:11px;padding:0 12px;height:36px;font-size:12px;font-weight:800;white-space:nowrap;}
+    .ghost-btn:hover{background:#293352;}
+    .score-strip{flex:none;display:grid;grid-template-columns:1.12fr 1fr 1fr minmax(126px,.95fr) minmax(126px,.95fr) minmax(110px,.8fr);gap:7px;min-height:66px;}
+    .metric,.config{min-width:0;background:#151c33;border:1px solid var(--border);border-radius:13px;padding:9px 12px;display:flex;flex-direction:column;justify-content:center;}
+    .metric small,.config label{color:var(--muted);font-size:9px;letter-spacing:.9px;font-weight:900;margin-bottom:3px;white-space:nowrap;}
+    .metric-value{font-size:clamp(19px,2.4vw,31px);font-weight:1000;line-height:1.05;font-variant-numeric:tabular-nums;}
+    .metric.timer{border-color:#526f38}.metric.timer .metric-value{color:var(--lime);}
+    .metric.timer.urgent .metric-value{color:var(--red);animation:pulse .7s infinite alternate;}
+    .metric .secondary{color:var(--muted);font-size:14px;}
+    .config select{min-width:0;width:100%;border:0;background:transparent;color:var(--text);font-weight:900;font-size:clamp(13px,1.35vw,17px);cursor:pointer;padding:0;outline:0;}
+    .config option{background:#1c2440;}
+    @keyframes pulse{from{opacity:1}to{opacity:.6}}
+    .game-layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(210px,25%) minmax(0,1fr);gap:9px;}
+    .sidebar{min-height:0;display:flex;flex-direction:column;gap:9px;}
+    .panel{min-height:0;background:#141a30;border:1px solid var(--border);border-radius:16px;box-shadow:0 10px 32px #0002;}
+    .state-card{flex:0 0 auto;max-height:100%;padding:clamp(12px,1.6vw,22px);display:flex;flex-direction:column;gap:clamp(7px,1.5vh,14px);}
+    .state-emoji{width:42px;height:42px;display:grid;place-items:center;border-radius:11px;background:#2a3451;font-size:23px;flex:none;}
+    .state-card h2{font-size:clamp(20px,2.1vw,27px);letter-spacing:-.6px;line-height:1.1;margin:0;}
+    .state-card p{font-size:clamp(11px,1.1vw,14px);line-height:1.4;color:var(--muted);margin:0;}
+    .primary-btn{width:100%;min-height:52px;background:var(--lime);color:#16230b;border:0;border-radius:12px;font-size:clamp(14px,1.25vw,18px);font-weight:1000;box-shadow:0 4px 0 #84b744;}
+    .primary-btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #84b744;}
+    .tiny-info{display:flex;gap:7px;align-items:center;color:var(--muted);font-size:11px;line-height:1.3;}
+    .tiny-dot{width:7px;height:7px;background:var(--yellow);border-radius:50%;flex:none;}
+    .tiny-dot.live{background:var(--green);}
+    .rules{flex:0 1 auto;overflow:hidden;padding:13px 16px;}
+    .rules h3{margin:0 0 8px;font-size:11px;letter-spacing:1px;}
+    .rules p{color:var(--muted);font-size:11px;line-height:1.4;margin:0 0 6px;}
+    .rules strong{color:var(--text);}
+    .board{padding:clamp(7px,1vh,13px);display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+    .board-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 3px 9px;}
+    .board-head h2{font-size:14px;letter-spacing:.2px;margin:0 0 3px;}
+    .board-head p{font-size:11px;margin:0;color:var(--muted);}
+    .source-pill{background:#2a334e;color:#d0d7f1;border-radius:30px;padding:5px 9px;font-size:9px;font-weight:850;white-space:nowrap;}
+    .rows{--columns:2;--row-count:5;flex:1;min-height:0;display:grid;grid-auto-flow:column;grid-template-columns:repeat(var(--columns),minmax(0,1fr));grid-template-rows:repeat(var(--row-count),minmax(0,1fr));gap:clamp(3px,.65vh,7px);}
+    .word-row{min-width:0;min-height:0;display:flex;align-items:center;gap:clamp(5px,.8vw,11px);padding:clamp(2px,.45vh,6px) clamp(5px,.7vw,10px);border:1px solid #34405b;border-radius:10px;background:#1b233b;overflow:hidden;}
+    .word-row .letter{flex:none;width:clamp(27px,3.2vh,41px);height:clamp(27px,3.2vh,41px);display:grid;place-items:center;border-radius:8px;background:#303b59;color:#d3dcf8;font-size:clamp(15px,1.55vw,21px);font-weight:1000;}
+    .word-row .word{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(12px,1.37vw,21px);font-weight:850;letter-spacing:-.3px;}
+    .word-row .word.masked{color:#7a84a3;letter-spacing:1px;font-size:12px;}
+    .word-row .tag{width:44px;flex:none;text-align:right;font-size:9px;font-weight:900;color:#97a2c2;white-space:nowrap;}
+    .word-row.active{background:#302e58;border-color:var(--purple);box-shadow:inset 4px 0 var(--purple);}
+    .word-row.active .letter{background:var(--purple);color:#18132a;}
+    .word-row.correct{background:#1a4537;border-color:#388b6c;}
+    .word-row.correct .letter{background:var(--green);color:#09311b;}
+    .word-row.correct .tag{color:var(--green);}
+    .word-row.skipped{background:#49391f;border-color:#9b7d36;}
+    .word-row.skipped .letter{background:var(--yellow);color:#3a2b0a;}
+    .word-row.skipped .tag{color:var(--yellow);}
+    .word-row.incorrect{background:#512a36;border-color:#995064;}
+    .word-row.incorrect .letter{background:var(--red);color:#3a1218;}
+    .word-row.incorrect .tag{color:var(--red);}
+    .action-dock{flex:none;display:none;background:#141a30;border:1px solid #333e5b;border-radius:15px;padding:7px;}
+    .action-dock.visible{display:block;}
+    .dock-inner{display:grid;grid-template-columns:1fr .9fr 1fr;gap:8px;max-width:1000px;margin:auto;}
+    .action-btn{border:0;min-height:clamp(54px,8vh,85px);border-radius:11px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:clamp(14px,1.35vw,20px);font-weight:1000;touch-action:manipulation;user-select:none;-webkit-user-select:none;}
+    .action-btn:active{filter:brightness(.91);transform:scale(.995);}
+    .action-btn .emoji{font-size:clamp(19px,2vw,29px);line-height:1;}
+    .action-btn.correct{background:var(--green);color:#07301d;}.action-btn.pass{background:var(--yellow);color:#372606;}.action-btn.wrong{background:var(--red);color:#3a1117;}
+    .footer{flex:none;color:#7e89a6;text-align:center;font-size:9px;line-height:1.1;}
+    .footer a{color:#aeb8d5;}
+    .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+    #confetti{pointer-events:none;position:fixed;inset:0;width:100vw;height:100vh;z-index:50;display:none;}
+    .playing .rules,.playing .footer{display:none;}
+    .playing .state-card{padding:12px;gap:8px;}
+    .playing .state-emoji{display:none;}
+    .playing .state-card h2{font-size:20px;}
+    .playing .state-card p{font-size:12px;}
+    .playing .tiny-info{margin-top:0;}
+    @media (min-width:800px) and (orientation:landscape) and (max-height:850px){
+      .app{gap:6px;padding-top:8px;padding-bottom:8px;}
+      .header{height:32px;}.ghost-btn{height:30px;}
+      .score-strip{min-height:57px;gap:6px;}
+      .metric,.config{padding:7px 9px;}
+      .game-layout{grid-template-columns:minmax(185px,21%) minmax(0,1fr);}
+      .rules{display:none;}
+      .state-card{padding:13px;gap:10px;}
+      .state-emoji{width:36px;height:36px;}
+      .board-head{padding-bottom:6px;}
+      .footer{display:none;}
+      .action-btn{min-height:clamp(52px,10vh,72px);}
     }
-    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;scroll-behavior:auto!important;transition-duration:.01ms!important;}}
-  </style>
-</head>
-<body>
-  <main class="app">
+    @media (max-width:790px){
+      .score-strip{grid-template-columns:repeat(3,minmax(0,1fr));min-height:0;}
+      .score-strip .metric{min-height:52px;}
+      .config{min-height:44px;padding:7px 8px;}
+      .config select{font-size:13px;}
+      .metric small,.config label{font-size:8px;}
+      .game-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);}
+      .sidebar{display:contents;}
+      .state-card{padding:9px 11px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 8px;}
+      .state-emoji,.rules{display:none;}
+      .state-card h2{font-size:17px;}
+      .state-card p{font-size:11px;}
+      .state-card .primary-btn{grid-column:2;grid-row:1 / span 3;width:auto;min-width:120px;padding:4px 10px;min-height:44px;}
+      .state-card .tiny-info{font-size:9px;}
+      .board{padding:6px;}
+      .board-head h2{font-size:12px;}
+      .footer{display:none;}
+      .playing .state-card{display:none;}
+      .word-row .word{font-size:clamp(11px,2.1vw,17px);}
+      .word-row .tag{display:none;}
+      .action-btn{min-height:57px;}
+    }
+    @media (max-width:440px){
+      .app{padding:6px;gap:5px;}
+      .header{height:34px;}.brand{font-size:18px;}.ghost-btn{padding:0 7px;font-size:11px;height:32px;}
+      .score-strip{gap:4px;}
+      .metric,.config{border-radius:9px;padding:6px;}
+      .metric-value{font-size:19px;}
+      .word-row{padding:2px 4px;gap:5px;}
+      .word-row .letter{width:24px;height:24px;font-size:14px;}
+      .word-row .word{font-size:11px;}
+      .board-head p{display:none;}
+      .dock-inner{gap:5px;}.action-btn{font-size:13px;gap:4px;min-height:55px;}
+      .action-btn .emoji{font-size:17px;}
+    }
+    @media (max-height:620px){
+      .app{padding-top:4px;padding-bottom:4px;gap:4px;}
+      .score-strip{min-height:46px;}.metric,.config{padding:5px 7px;}
+      .header{height:30px;}.word-row .letter{width:23px;height:23px;font-size:13px;}
+      .board-head{padding-bottom:3px;}
+      .state-card{padding:8px;gap:4px;}
+      .action-btn{min-height:48px;}
+    }
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+</style>
+</head><body><main class="app">
     <header class="header">
       <div class="brand" aria-label="Word Dash">WORD<b>DASH</b><span class="brand-dot">.</span></div>
       <div class="header-actions">
-        <button id="soundBtn" class="ghost-btn" type="button" aria-pressed="true" title="Toggle countdown beeps">🔊 Sound on</button>
-        <button id="resetBtn" class="ghost-btn" type="button" title="Reset and get a fresh set of ten words">↻ New round</button>
+        <button id="soundBtn" class="ghost-btn" type="button" aria-pressed="true" title="Toggle audio and spoken letter prompts">🔊 Audio on</button>
+        <button id="resetBtn" class="ghost-btn" type="button" title="Start a fresh round">↻ New round</button>
       </div>
     </header>
-
-    <section class="hero" aria-label="Game introduction">
-      <p class="eyebrow">THE TWO-PLAYER WORD RACE</p>
-      <h1>Describe it.<br>Guess it.<br><em>Beat the clock.</em></h1>
-      <p class="sub">Ten consecutive letters. Ten surprise words. One person gives clues, the other guesses. How fast can you clear the board?</p>
-    </section>
-
-    <section class="score-strip" aria-label="Game statistics">
+    <section class="score-strip" aria-label="Game settings and score">
       <div class="metric timer" id="timerBox"><small>TIME LEFT</small><span class="metric-value" id="timerText">01:00</span></div>
-      <div class="metric"><small>WORDS NAILED</small><span class="metric-value" id="progressText">0 <span class="secondary">/ 10</span></span></div>
-      <div class="metric"><small>FASTEST CLEAR</small><span class="metric-value" id="bestText">--:--</span></div>
-      <div class="config"><label for="duration">ROUND LENGTH</label><select id="duration"><option value="30">30 seconds</option><option value="45">45 seconds</option><option value="60" selected>60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option></select></div>
+      <div class="metric"><small>CORRECT</small><span class="metric-value" id="progressText">0 / 10</span></div>
+      <div class="metric"><small>BEST TIME</small><span class="metric-value" id="bestText">--:--</span></div>
+      <div class="config"><label for="duration">TIME LIMIT</label><select id="duration"><option value="30">30 seconds</option><option value="45">45 seconds</option><option value="60" selected>60 seconds</option><option value="90">90 seconds</option><option value="120">120 seconds</option><option value="180">3 minutes</option><option value="300">5 minutes</option></select></div>
+      <div class="config"><label for="difficulty">DIFFICULTY</label><select id="difficulty"><option value="easy" selected>Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="expert">Expert</option><option value="impossible">Impossible</option></select></div>
+      <div class="config"><label for="letterCount">LETTERS</label><select id="letterCount"></select></div>
     </section>
-
     <div class="game-layout">
       <aside class="sidebar">
         <section class="panel state-card" id="stateCard" aria-live="polite">
-          <div class="state-emoji" id="stateEmoji" aria-hidden="true">⚡</div>
+          <span class="state-emoji" id="stateEmoji" aria-hidden="true">⚡</span>
           <h2 id="stateTitle">Getting your words…</h2>
-          <p id="stateDescription">Preparing ten random words. They'll be revealed when you start.</p>
+          <p id="stateDescription">Fetching fresh words. They stay hidden until Start.</p>
           <button class="primary-btn" id="startBtn" type="button" disabled>Loading words…</button>
-          <div class="tiny-info"><span class="tiny-dot" id="apiDot"></span><span id="apiStatus">Picking a fresh set of words</span></div>
+          <div class="tiny-info"><span class="tiny-dot" id="apiDot"></span><span id="apiStatus">Connecting to word API…</span></div>
         </section>
         <section class="panel rules">
           <h3>HOW TO PLAY</h3>
-          <p><strong>🟢 Got it</strong> — guessed correctly. Goes green and advances.</p>
-          <p><strong>🟡 Pass</strong> — skip for now. Goes yellow and returns later.</p>
-          <p><strong>🔴 Missed</strong> — mark as missed. Goes red, but you can retry it.</p>
-          <p>You have to turn <strong>all ten green</strong> before time runs out. After the first pass through A–J (or another consecutive set), missed words return automatically.</p>
+          <p><strong>👍 Got it</strong> — green; next letter.</p>
+          <p><strong>⏭ Pass</strong> — yellow; return later.</p>
+          <p><strong>👎 Missed</strong> — red; return later.</p>
+          <p>Turn every letter green before time runs out. The game will say each new letter out loud.</p>
         </section>
       </aside>
       <section class="panel board" aria-labelledby="boardHeading">
         <div class="board-head">
-          <div><h2 id="boardHeading">YOUR WORD BOARD</h2><p id="boardSub">Words stay secret until the clock starts.</p></div>
-          <span class="source-pill" id="sourcePill">PREPARING</span>
+          <div><h2 id="boardHeading">YOUR WORD BOARD</h2><p id="boardSub">Words appear when you press Start.</p></div>
+          <span class="source-pill" id="sourcePill">CONNECTING</span>
         </div>
-        <div class="rows" id="wordRows" aria-label="The ten letter words"></div>
+        <div class="rows" id="wordRows" aria-label="Alphabet words"></div>
       </section>
     </div>
-    <footer class="footer">Everyday words from a hand-picked list · <a href="https://www.datamuse.com/api/" target="_blank" rel="noopener noreferrer">Datamuse</a> helps vary the mix when available · Best time saved on this device</footer>
-  </main>
-
-  <div class="action-dock" id="actionDock" aria-label="Answer controls">
-    <div class="dock-inner">
-      <button class="action-btn correct" id="correctBtn" type="button"><span class="emoji" aria-hidden="true">👍</span>Got it</button>
-      <button class="action-btn pass" id="passBtn" type="button"><span class="emoji" aria-hidden="true">⏭️</span>Pass</button>
-      <button class="action-btn wrong" id="wrongBtn" type="button"><span class="emoji" aria-hidden="true">👎</span>Missed</button>
+    <div class="action-dock" id="actionDock" aria-label="Answer controls">
+      <div class="dock-inner">
+        <button class="action-btn correct" id="correctBtn" type="button"><span class="emoji" aria-hidden="true">👍</span>Got it</button>
+        <button class="action-btn pass" id="passBtn" type="button"><span class="emoji" aria-hidden="true">⏭</span>Pass</button>
+        <button class="action-btn wrong" id="wrongBtn" type="button"><span class="emoji" aria-hidden="true">👎</span>Missed</button>
+      </div>
     </div>
-  </div>
+    <footer class="footer">Words sourced live from <a href="https://www.datamuse.com/api/" target="_blank" rel="noopener noreferrer">Datamuse</a> · Recent words remembered on this device · Works online</footer>
+  </main>
   <canvas id="confetti" aria-hidden="true"></canvas>
-  <div id="announcer" class="visually-hidden" role="status" aria-live="polite"></div>
-
-  <script>
-    (() => {
-      'use strict';
-      const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      // Only easy, familiar words. Shuffle every round for a different set.
-      const BANK = Object.fromEntries(Object.entries({
-        "A": "Apple|Animal|Airport|Ant|Aunt|Alarm clock|Apron|Autumn|Ambulance|Arrow|Astronaut|Airplane|Artist|April|Alphabet|Adventure|Aquarium|Apple pie|Arm|Australia",
-        "B": "Banana|Bread|Bed|Bicycle|Bus|Baby|Beach|Birthday|Balloon|Burger|Breakfast|Bottle|Book|Blanket|Brother|Bathroom|Bird|Butter|Biscuit|Bridge|Boots|Backpack|Basketball",
-        "C": "Chocolate|Cat|Car|Chair|Chicken|Cheese|Cake|Coffee|Cinema|Christmas|Cookie|Camera|Castle|Cow|Candle|Cloud|Computer|Crown|Coat|Cup|Carpet|Camping|Cucumber",
-        "D": "Dog|Door|Dinner|Doctor|Dance|Dinosaur|Dad|Duck|Dress|Drink|Dragon|Diamond|Dream|Dice|Donut|Dentist|Desk|Driving|Doorbell|Desert|Drum|Dolphin|Doll",
-        "E": "Egg|Elephant|Ear|Evening|Email|Engine|Exercise|Easter|England|Earth|Eye|Exit|Elevator|Exam|Envelope|Earphones|Electricity|Eating|Emergency|Empty|Elf|Eight",
-        "F": "Fish|Football|Flower|Family|Friend|Food|Fire|Finger|Farm|Film|Friday|Fireworks|Face|Frog|Forest|Fridge|Fork|Fence|Fruit|Feet|Father|Freezer|Festival",
-        "G": "Garden|Guitar|Glasses|Giraffe|Game|Gift|Girl|Grandad|Goat|Ghost|Gold|Grapes|Grass|Gloves|Garage|Gate|Goal|Golf|Gum|Gym|Garlic|Goldfish|Goose",
-        "H": "House|Hat|Hair|Horse|Hand|Holiday|Hospital|Hotel|Honey|Hammer|Heart|Hill|Hippo|Hamburger|Home|Hot dog|Halloween|Head|Hedgehog|Homework|Helicopter|Hug|Hairbrush",
-        "I": "Ice cream|Island|Internet|Iron|Ice|Insect|Igloo|Idea|Ink|Invitation|Inside|Invisible|India|Italy|Ice skating|Instrument|Icing|Iceberg|Image|Injury",
-        "J": "Jam|Juice|Jacket|Jeans|Jelly|Jump|Jungle|Job|Joke|Jet|Jellyfish|Jigsaw|January|July|June|Jogging|Jewellery|Journey|Jar|Judge|Joker|Jumper|Jazz|Jellybean",
-        "K": "King|Kite|Kitchen|Key|Kangaroo|Kettle|Kiss|Kitten|Kiwi|Knee|Knife|Keyboard|Knock|Karate|Ketchup|Koala|Kids|Knight|Kayak|Kebab|Knitting|Kick",
-        "L": "Lemon|Lion|Ladder|Library|Laptop|Lunch|Lamp|Letter|Leg|Lake|Love|Laugh|Lemonade|Lollipop|Light|Laundry|Leaf|Lock|Lasagne|London|Ladybird|Lunchbox|Luggage",
-        "M": "Music|Money|Milk|Moon|Mum|Mouse|Monkey|Mountain|Movie|Mirror|Magic|Morning|Motorbike|Mushroom|Message|Meal|Map|Meat|Milkshake|Moustache|Microwave|Mango|Marmalade|Museum",
-        "N": "Nose|Nurse|Name|Night|New York|Necklace|Newspaper|Notebook|Neighbour|Noodles|Nap|Nail|Number|Net|Nest|North Pole|Niece|Nephew|Napkin|Nuts|Nature|Needle|Noise|November|New Year",
-        "O": "Orange|Ocean|Office|Onion|Oven|Owl|Octopus|Outside|Open|Order|Omelette|Otter|Oil|Old|One|Owner|Oxygen|Orchestra|Olympics|Ostrich|Online",
-        "P": "Pizza|Phone|Pencil|Paper|Park|Pig|Penguin|Parent|Party|Pillow|Potato|Picture|Present|Police|Popcorn|Pancake|Passport|Prince|Princess|Puppy|Plane|Paint|Postcard|Pumpkin|Pocket",
-        "Q": "Queen|Quiz|Question|Queue|Quiet|Quick|Quilt|Quack|Quarter|Quote|Quiche|Quality|Quit|Quicksand",
-        "R": "Rent|Rain|Rabbit|Radio|Rainbow|Road|River|Ring|Robot|Rocket|Rice|Restaurant|Room|Red|Roof|Rugby|Rope|Rose|Running|Race|Remote control|Rucksack|Recipe|Rat|Rollercoaster",
-        "S": "Sun|Star|School|Shoe|Sandwich|Soup|Sister|Spider|Snake|Snow|Shopping|Swimming|Sugar|Soap|Sofa|Socks|Sausage|Shirt|Smile|Song|Strawberry|Supermarket|Sweets|Summer|Shower",
-        "T": "Table|Tea|Train|Tree|Tiger|Tomato|Telephone|Television|Time|Toothbrush|Taxi|Teacher|Toilet|Trousers|Ticket|Tennis|Town|Tooth|Turtle|Toast|Toy|Tent|Turkey|Towel|Traffic",
-        "U": "Umbrella|Uncle|Uniform|Upstairs|Underwear|University|Underground|Unicorn|Upset|Useful|Ugly|Ukulele|United Kingdom|Unhappy|Unwell|Unicycle",
-        "V": "Van|Vegetable|Video|Village|Violin|Voice|Volcano|Vase|Vet|Visit|Vacation|Valentine|Vanilla|Vampire|Video game|Vacuum|Vote|Vest|Visitor",
-        "W": "Water|Window|Wind|Wheel|Watch|Walk|Work|Winter|Wedding|Washing machine|Whale|Woman|Wallet|Wood|Worm|Weather|Wednesday|Week|White|Wardrobe|Watermelon|Waffle|Wall|World"
-}).map(([letter, items])=>[letter,items.split('|')]));
-
-      const el = id => document.getElementById(id);
-      const rowsEl = el('wordRows'), startBtn = el('startBtn'), timeText = el('timerText');
-      let words = [], statuses = [], current = -1, phase = 'loading', length = 60;
-      let deadline = 0, timerHandle = 0, latestDisplayed = 60, elapsedStart = 0;
-      let soundOn = true, audioContext = null, roundGeneration = 0, loadController = null;
-      let best = readBest(length);
-      let previousWords = [];
-      const canvas = el('confetti'), ctx = canvas.getContext('2d');
-      let particles = [], confettiFrame = 0, confettiSince = 0;
-
-      function localStorageSafeGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
-      function localStorageSafeSet(key,val) { try { localStorage.setItem(key,val); } catch (_) {} }
-      function readBest(duration) { const value=localStorageSafeGet('worddash-best-time-'+duration); return value === null ? null : Number(value); }
-      function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-      function shuffle(arr) { const copy = arr.slice(); for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]];}return copy; }
-      function fmt(seconds) { const s=Math.max(0,Math.ceil(seconds)); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
-      function setView(title,text,emoji,buttonText,buttonVisible=true) {
-        el('stateTitle').textContent=title;el('stateDescription').textContent=text;el('stateEmoji').textContent=emoji;
-        startBtn.textContent=buttonText;startBtn.hidden=!buttonVisible;
+  <div id="announcer" class="visually-hidden" role="status" aria-live="polite"></div><script id="worddash-script">(() => {
+  'use strict';
+  const LETTERS='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const el=id=>document.getElementById(id);
+  const rowsEl=el('wordRows'), startBtn=el('startBtn'),timeText=el('timerText');
+  const canvas=el('confetti'), ctx=canvas.getContext('2d');
+  const scriptFingerprint=document.currentScript?.textContent || '';
+  const styleFingerprint=document.querySelector('style')?.textContent || '';
+  const STORAGE_HISTORY='worddash-api-history-v1';
+  const STORAGE_SETTINGS='worddash-settings-v1';
+  const DISALLOWED=/\b(?:fuck|shit|cunt|nigger|faggot|rape|porn|pussy|cock|dick|bitch|slut|suicide)\b/i;
+  const FUNCTION_WORDS=new Set(['about','after','again','also','although','always','among','another','anyone','anything','around','because','before','being','between','could','does','during','either','every','everyone','everything','first','from','have','here','into','itself','just','maybe','might','more','most','must','never','none','other','ours','ourselves','over','same','shall','should','some','someone','something','their','them','there','these','those','through','today','tomorrow','under','until','upon','very','were','what','when','where','which','while','whose','with','would','your','yourself']);
+  let phase='loading',words=[],statuses=[],current=-1,roundGeneration=0,controller=null;
+  let timerHandle=0,deadline=0,elapsedStart=0,latestDisplayed=60,remaining=60;
+  let duration=60,letterCount=10,difficulty='easy',best=null;
+  let audioOn=true,audioContext=null,pendingUpdate=false,particles=[],confettiFrame=0;
+  let history=readJSON(STORAGE_HISTORY,[]);
+  if(!Array.isArray(history))history=[];
+  history=history.filter(item=>typeof item==='string').slice(-2200);
+  for(let i=1;i<=26;i++){const opt=document.createElement('option');opt.value=i;opt.textContent=`${i} ${i===1?'letter':'letters'}`;el('letterCount').append(opt);}
+  el('letterCount').value='10';
+  const stored=readJSON(STORAGE_SETTINGS,{});
+  if(stored && typeof stored==='object'){
+    if([30,45,60,90,120,180,300].includes(Number(stored.duration)))el('duration').value=String(stored.duration);
+    if(['easy','medium','hard','expert','impossible'].includes(stored.difficulty))el('difficulty').value=stored.difficulty;
+    if(Number.isInteger(Number(stored.letterCount))&&Number(stored.letterCount)>=1&&Number(stored.letterCount)<=26)el('letterCount').value=String(stored.letterCount);
+  }
+  if(!el('letterCount').value)el('letterCount').value='10';
+  function readJSON(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback;}catch(_){return fallback;}}
+  function writeJSON(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch(_){}}
+  function readBest(){const value=readJSON(`worddash-best-v2-${difficulty}-${duration}-${letterCount}`,null);return Number.isFinite(value)?value:null;}
+  function setSettings(){writeJSON(STORAGE_SETTINGS,{duration,letterCount,difficulty});}
+  function readConfig(){duration=Number(el('duration').value);letterCount=Number(el('letterCount').value);difficulty=el('difficulty').value;setSettings();best=readBest();}
+  function fmt(n){const seconds=Math.max(0,Math.ceil(n));return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
+  function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  function setView(title,desc,emoji,action,show=true){el('stateTitle').textContent=title;el('stateDescription').textContent=desc;el('stateEmoji').textContent=emoji;startBtn.textContent=action;startBtn.hidden=!show;}
+  function announce(msg){el('announcer').textContent=msg;}
+  function renderBest(){el('bestText').textContent=best===null?'--:--':fmt(best);}
+  function applyColumns(){
+    const cols=letterCount<=7?1:letterCount<=18?2:3;
+    rowsEl.style.setProperty('--columns',cols);
+    rowsEl.style.setProperty('--row-count',Math.ceil(letterCount/cols));
+  }
+  function renderRows(){
+    applyColumns();rowsEl.replaceChildren();
+    const visible=['playing','won','lost'].includes(phase);
+    words.forEach(({letter,word},i)=>{
+      const row=document.createElement('div');row.id=`word-${i}`;row.className='word-row';
+      const status=statuses[i]||'pending';
+      if(visible && status!=='pending')row.classList.add(status);
+      if(phase==='playing'&&current===i)row.classList.add('active');
+      const left=document.createElement('span');left.className='letter';left.textContent=letter;
+      const mid=document.createElement('span');mid.className='word'+(visible?'':' masked');mid.textContent=visible?word:'•••••';
+      if(visible)mid.title=word;
+      const tag=document.createElement('span');tag.className='tag';
+      tag.textContent=!visible?'HIDDEN':status==='correct'?'✓ DONE':current===i&&phase==='playing'?'● NOW':status==='skipped'?'↷ PASS':status==='incorrect'?'✕ MISSED':'NEXT';
+      row.append(left,mid,tag);rowsEl.append(row);
+    });
+    el('progressText').textContent=`${statuses.filter(s=>s==='correct').length} / ${letterCount}`;
+  }
+  function sourceState(msg,ok){el('sourcePill').textContent=msg;el('apiStatus').textContent=ok?'Fresh API words ready':msg==='UNAVAILABLE'?'Word API unavailable — check connection':'Loading live word list…';el('apiDot').classList.toggle('live',ok);}
+  function clearTimer(){clearInterval(timerHandle);timerHandle=0;}
+  function stopConfetti(){cancelAnimationFrame(confettiFrame);confettiFrame=0;particles=[];canvas.style.display='none';}
+  function stopSpeech(){if('speechSynthesis' in window){try{window.speechSynthesis.cancel();}catch(_){}}}
+  function speakLetter(letter){
+    if(!audioOn||!('speechSynthesis' in window))return;
+    try{
+      stopSpeech();
+      const u=new SpeechSynthesisUtterance('Letter '+letter);
+      u.lang='en-GB';u.rate=1.12;u.pitch=1;u.volume=1;
+      const voices=window.speechSynthesis.getVoices();
+      const british=voices.find(v=>v.lang==='en-GB')||voices.find(v=>v.lang.startsWith('en'));
+      if(british)u.voice=british;
+      window.speechSynthesis.speak(u);
+    }catch(_){}
+  }
+  function ensureAudio(){
+    if(!audioOn)return;
+    try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;if(!audioContext)audioContext=new AudioCtx();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});}catch(_){}
+  }
+  function beep(secs=30){
+    if(!audioOn||!audioContext||audioContext.state!=='running')return;
+    try{
+      const now=audioContext.currentTime,osc=audioContext.createOscillator(),gain=audioContext.createGain();
+      const expired=secs<=0,urgent=secs<=10,finalFive=secs<=5;
+      const pitch=expired?410:finalFive?1350:urgent?1100:790;
+      const length=expired?.43:finalFive?.16:urgent?.12:.085;
+      osc.type=expired?'sawtooth':urgent?'triangle':'sine';osc.frequency.setValueAtTime(pitch,now);
+      if(expired)osc.frequency.exponentialRampToValueAtTime(210,now+length);
+      const speaking=typeof speechSynthesis!=='undefined'&&speechSynthesis.speaking;
+      gain.gain.setValueAtTime(.0001,now);
+      gain.gain.exponentialRampToValueAtTime((expired?.08:urgent?.065:.035)*(speaking?.32:1),now+.008);
+      gain.gain.exponentialRampToValueAtTime(.0001,now+length);
+      osc.connect(gain);gain.connect(audioContext.destination);osc.start(now);osc.stop(now+length+.01);
+    }catch(_){}
+  }
+  function freq(item){const f=(item.tags||[]).find(t=>typeof t==='string'&&t.startsWith('f:'));return f?Number(f.slice(2)):NaN;}
+  function valid(item,letter){
+    if(!item||typeof item.word!=='string')return false;
+    const w=item.word.trim(),low=w.toLowerCase();
+    if(!low.startsWith(letter.toLowerCase())||w.length<3||w.length>27||!/^[a-z]+(?:[ '-][a-z]+){0,2}$/i.test(w))return false;
+    if(DISALLOWED.test(w)||FUNCTION_WORDS.has(low))return false;
+    if(/(?:'s|ing's|ly's)$/i.test(w))return false;
+    const tags=item.tags||[];
+    if(tags.includes('u')&&!tags.some(t=>['n','v','adj','adv'].includes(t)))return false;
+    return true;
+  }
+  function poolForDifficulty(list,letter,mode){
+    const all=list.filter(item=>valid(item,letter));
+    if(!all.length)return [];
+    // Rank by API popularity and frequency rather than making word length the definition of difficulty.
+    const ranked=all.map((item,i)=>({...item,frequency:freq(item),rank:(i+1)/all.length}));
+    let result=ranked.filter(item=>{
+      const f=Number.isFinite(item.frequency)?item.frequency:0;
+      const r=item.rank;
+      const pos=item.tags||[];
+      if(mode==='easy')return (f>=2.5||r<.22)&&r<.52&&(pos.includes('n')||pos.includes('v')||pos.includes('adj'));
+      if(mode==='medium')return (f>=.7&&f<=35)||r>=.18&&r<=.58;
+      if(mode==='hard')return (f>=.12&&f<=5)||r>=.46&&r<=.81;
+      if(mode==='expert')return (f>=.015&&f<=1.6)||r>=.68;
+      return (f>0&&f<=.3)||r>=.86;
+    });
+    // Sparse letters can be tougher than the selected difficulty; still use only API words.
+    if(result.length<7){const start={easy:0,medium:.15,hard:.38,expert:.60,impossible:.78}[mode];result=ranked.filter(item=>item.rank>=start);}
+    return result.length?result:ranked;
+  }
+  async function fetchLetter(letter,signal){
+    const plans=[{sp:letter.toLowerCase()+'*',max:1000}];
+    if(difficulty==='expert'||difficulty==='impossible')plans.push({sp:letter.toLowerCase()+'????*',max:1000});
+    const sets=[];
+    for(const plan of plans){
+      const url='https://api.datamuse.com/words?'+new URLSearchParams({...plan,md:'pf'}).toString();
+      let response;
+      try{response=await fetch(url,{signal,cache:'no-store'});}catch(err){if(signal.aborted)throw err;continue;}
+      if(!response.ok)continue;
+      const data=await response.json();
+      if(Array.isArray(data))sets.push(...data);
+    }
+    if(!sets.length)throw Error('No API words for '+letter);
+    const deduped=[...new Map(sets.map(x=>[String(x.word).toLowerCase(),x])).values()];
+    deduped.sort((a,b)=>(Number.isFinite(freq(b))?freq(b):0)-(Number.isFinite(freq(a))?freq(a):0));
+    const pool=poolForDifficulty(deduped,letter,difficulty);
+    if(!pool.length)throw Error('No suitable API words for '+letter);
+    return pool;
+  }
+  async function fetchAll(letters,signal){
+    const result=new Array(letters.length);let next=0;
+    const workers=Array.from({length:Math.min(6,letters.length)},async()=>{
+      while(next<letters.length){const i=next++;result[i]=await fetchLetter(letters[i],signal);}
+    });
+    await Promise.all(workers);
+    return result;
+  }
+  function chooseWords(letters,pools){
+    const usedRound=new Set();
+    const recent=new Set(history);
+    const selection=letters.map((letter,i)=>{
+      const options=shuffle(pools[i]);
+      // Avoid all recently played words; only repeat if this API pool truly runs out.
+      let candidates=options.filter(item=>!recent.has(item.word.toLowerCase())&&!usedRound.has(item.word.toLowerCase()));
+      if(!candidates.length)candidates=options.filter(item=>!usedRound.has(item.word.toLowerCase()));
+      if(!candidates.length)throw Error('Not enough distinct words for '+letter);
+      // Sample rather than always taking the most common word in the difficulty band.
+      const chosen=candidates[Math.floor(Math.random()*candidates.length)];
+      usedRound.add(chosen.word.toLowerCase());
+      const word=chosen.word.trim();
+      return {letter,word:word.charAt(0).toUpperCase()+word.slice(1)};
+    });
+    history=[...history,...selection.map(item=>item.word.toLowerCase())].slice(-2200);
+    writeJSON(STORAGE_HISTORY,history);
+    return selection;
+  }
+  async function prepareRound(){
+    if(pendingUpdate){window.location.reload();return;}
+    const generation=++roundGeneration;
+    if(controller)controller.abort();controller=new AbortController();
+    stopSpeech();clearTimer();stopConfetti();readConfig();
+    document.body.classList.remove('playing');el('actionDock').classList.remove('visible');el('timerBox').classList.remove('urgent');
+    ['duration','difficulty','letterCount'].forEach(key=>el(key).disabled=false);
+    latestDisplayed=duration;remaining=duration;timeText.textContent=fmt(duration);
+    current=-1;phase='loading';startBtn.disabled=true;
+    setView('Getting your words…',`Loading ${letterCount} fresh ${difficulty} words from the API…`,'⚡','Loading words…');
+    el('boardSub').textContent='Words stay hidden until Start.';sourceState('LOADING API',false);
+    // Always a consecutive run; 26 letters yields A–Z.
+    const start=Math.floor(Math.random()*(LETTERS.length-letterCount+1));
+    const letters=LETTERS.slice(start,start+letterCount).split('');
+    words=letters.map(letter=>({letter,word:''}));statuses=Array(letterCount).fill('pending');renderRows();renderBest();
+    let timeout=setTimeout(()=>controller.abort(),28000);
+    try{
+      const pools=await fetchAll(letters,controller.signal);
+      if(generation!==roundGeneration)return;
+      words=chooseWords(letters,pools);
+      phase='ready';renderRows();sourceState('LIVE API',true);
+      setView('Ready to dash?',`Explain the words while your teammate guesses. ${letterCount} letters · ${difficulty}.`,'⚡','▶ Start round');
+      startBtn.disabled=false;announce(`Round ready, ${letterCount} letters. Press Start.`);
+    }catch(err){
+      if(generation!==roundGeneration)return;
+      phase='error';sourceState('UNAVAILABLE',false);
+      setView('Couldn’t load words',`This game now uses live API words only. Check your internet connection, then retry. (${err?.name==='AbortError'?'Request timed out':'Word service unavailable'})`,'📡','↻ Retry loading');
+      startBtn.disabled=false;announce('Could not load words from the API.');
+    }finally{clearTimeout(timeout);}
+  }
+  function tick(){
+    if(phase!=='playing')return;
+    remaining=Math.max(0,(deadline-performance.now())/1000);
+    const secs=Math.ceil(remaining);
+    if(secs!==latestDisplayed){
+      latestDisplayed=secs;timeText.textContent=fmt(secs);
+      el('timerBox').classList.toggle('urgent',secs<=10);
+      if(secs>0)beep(secs);
+    }
+    if(remaining<=0)finish(false);
+  }
+  function startRound(){
+    if(phase!=='ready')return;
+    ensureAudio();
+    phase='playing';current=0;elapsedStart=performance.now();deadline=elapsedStart+duration*1000;
+    ['duration','difficulty','letterCount'].forEach(key=>el(key).disabled=true);
+    document.body.classList.add('playing');el('actionDock').classList.add('visible');
+    setView('You’re on!',`Say clues for the highlighted word. You need all ${letterCount} green!`,'🔥','',false);
+    el('boardSub').textContent='Explain the highlighted word — tap your answer.';
+    renderRows();timerHandle=setInterval(tick,80);tick();
+    speakLetter(words[0].letter);announce('Round started. Letter '+words[0].letter);
+  }
+  function act(status){
+    if(phase!=='playing')return;
+    if(performance.now()>=deadline){finish(false);return;}
+    const old=current;statuses[old]=status;
+    if(statuses.every(s=>s==='correct')){renderRows();finish(true);return;}
+    let next=-1;
+    for(let i=old+1;i<letterCount;i++)if(statuses[i]==='pending'){next=i;break;}
+    if(next<0)for(let i=0;i<letterCount;i++)if(statuses[i]==='pending'){next=i;break;}
+    if(next<0)for(let step=1;step<=letterCount;step++){
+      const i=(old+step)%letterCount;if(statuses[i]!=='correct'){next=i;break;}
+    }
+    current=next;renderRows();speakLetter(words[current].letter);
+    announce(`${words[old].letter} ${status==='correct'?'correct':status==='skipped'?'passed':'missed'}. Next letter ${words[current].letter}.`);
+  }
+  function finish(won){
+    if(phase!=='playing')return;
+    clearTimer();stopSpeech();el('actionDock').classList.remove('visible');document.body.classList.remove('playing');
+    phase=won?'won':'lost';
+    ['duration','difficulty','letterCount'].forEach(key=>el(key).disabled=false);
+    if(won){
+      const elapsed=Math.max(1,Math.round((performance.now()-elapsedStart)/1000));
+      const record=best===null||elapsed<best;
+      if(record){best=elapsed;writeJSON(`worddash-best-v2-${difficulty}-${duration}-${letterCount}`,best);}
+      setView(record?'🏆 New best time!':'🎉 All letters cleared!',`All ${letterCount} guessed in ${fmt(elapsed)}. ${record?'A new record at this difficulty and round length!':'Great round!'}`,'🎉','↻ Play again');
+      timeText.textContent=fmt(remaining);el('boardSub').textContent='Every letter is green — well played!';
+      celebrate();announce(`You win! All ${letterCount} words guessed!`);
+    }else{
+      timeText.textContent='00:00';el('timerBox').classList.add('urgent');
+      const completed=statuses.filter(s=>s==='correct').length;
+      setView('⏱ Time’s up!',`You got ${completed} of ${letterCount} words. Try again!`,'💥','↻ Try again');
+      el('boardSub').textContent='Game over. Give it another go!';
+      beep(0);announce(`Time is up. ${completed} out of ${letterCount} words completed.`);
+    }
+    startBtn.hidden=false;startBtn.disabled=false;renderRows();renderBest();
+  }
+  function celebrate(){
+    if(!ctx)return;
+    stopConfetti();const scale=Math.min(2,window.devicePixelRatio||1);
+    canvas.width=innerWidth*scale;canvas.height=innerHeight*scale;ctx.setTransform(scale,0,0,scale,0,0);canvas.style.display='block';
+    const colors=['#c0f96a','#ffd36b','#988bff','#5bea9a','#ff777d','#fff'];
+    particles=Array.from({length:150},()=>({x:Math.random()*innerWidth,y:-20-Math.random()*innerHeight*.75,vx:(Math.random()-.5)*3,vy:2+Math.random()*3,spin:Math.random()*6.28,rot:(Math.random()-.5)*.2,size:4+Math.random()*7,color:colors[Math.floor(Math.random()*colors.length)]}));
+    const since=performance.now();
+    function animate(t){ctx.clearRect(0,0,innerWidth,innerHeight);particles.forEach(p=>{p.vy+=.035;p.x+=p.vx;p.y+=p.vy;p.spin+=p.rot;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.spin);ctx.fillStyle=p.color;ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*.6);ctx.restore();});if(t-since<4000)confettiFrame=requestAnimationFrame(animate);else stopConfetti();}
+    confettiFrame=requestAnimationFrame(animate);
+  }
+  function checkForUpdates(){
+    if(!navigator.onLine)return;
+    fetch('./index.html?check='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('not available');return r.text();}).then(text=>{
+      const parsed=new DOMParser().parseFromString(text,'text/html');
+      const latestCode=parsed.getElementById('worddash-script')?.textContent;
+      const latestStyle=parsed.querySelector('style')?.textContent;
+      if(latestCode && (latestCode!==scriptFingerprint || latestStyle!==styleFingerprint)){
+        pendingUpdate=true;
+        if(phase!=='playing'&&phase!=='loading'){window.location.reload();}
       }
-      function announce(text) { el('announcer').textContent=text; }
-      function renderBest() { el('bestText').textContent=best===null?'--:--':fmt(best); }
-      function renderRows() {
-        const visible = phase==='playing'||phase==='won'||phase==='lost';
-        rowsEl.replaceChildren();
-        words.forEach((item,i)=>{
-          const row=document.createElement('div');row.className='word-row';row.id='word-'+i;
-          const status=statuses[i]||'pending';
-          if (visible && status!=='pending') row.classList.add(status);
-          if (phase==='playing'&&current===i) row.classList.add('active');
-          const letter=document.createElement('span');letter.className='letter';letter.textContent=item.letter;
-          const word=document.createElement('span');word.className='word'+(visible?'':' masked');word.textContent=visible?item.word:'••••••••';
-          const tag=document.createElement('span');tag.className='tag';
-          tag.textContent=!visible?'HIDDEN':status==='correct'?'✓ DONE':current===i&&phase==='playing'?'● NOW':status==='skipped'?'↷ PASS':status==='incorrect'?'✕ MISSED':'NEXT';
-          row.append(letter,word,tag);rowsEl.append(row);
-        });
-        const count=statuses.filter(s=>s==='correct').length;
-        el('progressText').innerHTML=String(count)+' <span class="secondary">/ 10</span>';
-      }
-      function scrollActive() {
-        if(!matchMedia('(max-width:760px)').matches) return;
-        const target=el('word-'+current);
-        if(target) requestAnimationFrame(()=>target.scrollIntoView({behavior:'smooth',block:'center'}));
-      }
-      function setSource(text, live) {
-        el('sourcePill').textContent=text;
-        el('apiStatus').textContent=live?'Fresh words ready':text==='EASY WORDS'?'Everyday words ready':'Finding fresh words online';
-        el('apiDot').classList.toggle('live',live||text==='OFFLINE BANK');
-      }
-      function clearTimer(){clearInterval(timerHandle);timerHandle=0;}
-      function stopConfetti(){cancelAnimationFrame(confettiFrame);confettiFrame=0;particles=[];canvas.style.display='none';}
-      async function fetchFromApi(letters, signal){
-        // The Datamuse spelling constraint retrieves frequently used words starting with this letter.
-        // Allow 5 seconds then gracefully fall back. The final list is randomized locally.
-        const queries=letters.map(async letter=>{
-          try{
-            const response=await fetch('https://api.datamuse.com/words?sp='+letter.toLowerCase()+'*&max=200', {signal,cache:'no-store'});
-            if(!response.ok) throw Error('word service unavailable');
-            const data=await response.json();
-            const approved=new Set(BANK[letter].map(word=>word.toLowerCase()));
-            return Array.isArray(data)?data.map(item=>item.word).filter(word=>typeof word==='string'&&approved.has(word.toLowerCase())):[];
-          } catch(err) { return []; }
-        });
-        return Promise.all(queries);
-      }
-      function selectWords(letters, lists) {
-        const used = new Set();
-        return letters.map((letter,i)=>{
-          const bank=shuffle(BANK[letter]);
-          const approved=new Set(bank.map(word=>word.toLowerCase()));
-          const external=shuffle((lists?.[i]||[]).filter(word=>approved.has(word.toLowerCase())));
-          const options=Math.random()<.45?[...external,...bank]:[...bank,...external];
-          const word=options.find(x=>!used.has(x.toLowerCase())&&!previousWords.includes(x.toLowerCase()))||options[0]||letter;
-          used.add(word.toLowerCase());
-          return {letter,word:word.charAt(0).toUpperCase()+word.slice(1)};
-        });
-      }
-      async function prepareRound(){
-        roundGeneration++;
-        const generation=roundGeneration;
-        if(loadController)loadController.abort();
-        clearTimer();stopConfetti();
-        document.body.classList.remove('playing');
-        el('actionDock').classList.remove('visible');el('timerBox').classList.remove('urgent');
-        length=Number(el('duration').value);best=readBest(length);el('duration').disabled=false;
-        latestDisplayed=length;timeText.textContent=fmt(length);
-        current=-1;phase='loading';startBtn.disabled=true;
-        setView('Getting your words…','Finding a fresh set of ten words. They stay hidden until you hit Start.','⚡','Loading words…');
-        el('boardSub').textContent='Words stay secret until the clock starts.';
-        setSource('PREPARING',false);
-        // Avoid X, Y and Z, which make easy-mode rounds unnecessarily tricky.
-        const startIndex=Math.floor(Math.random()*14);
-        const letters=LETTERS.slice(startIndex,startIndex+10).split('');
-        words=letters.map(letter=>({letter,word:''}));statuses=Array(10).fill('pending');renderRows();renderBest();
-        loadController=new AbortController();
-        const t=setTimeout(()=>loadController.abort(),5000);
-        let candidates;
-        try{candidates=await fetchFromApi(letters,loadController.signal);}catch(_){candidates=[];}
-        finally{clearTimeout(t);}
-        if(generation!==roundGeneration)return;
-        const gotApi=candidates.some(list=>list.length>0);
-        words=selectWords(letters,candidates);
-        previousWords=words.map(o=>o.word.toLowerCase());
-        phase='ready';renderRows();setSource(gotApi?'EVERYDAY WORDS':'EASY WORDS',gotApi);
-        startBtn.disabled=false;setView('Ready to race?','Pick who gives the clues. Your ten words will appear together as soon as you start.','⚡','▶ Start round');
-        announce('Ten words ready. Press Start round when both players are ready.');
-      }
-      function ensureAudio(){
-        if(!soundOn)return;
-        try{
-          const AudioCtx=window.AudioContext||window.webkitAudioContext;
-          if(!AudioCtx)return;
-          if(!audioContext)audioContext=new AudioCtx();
-          if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
-        }catch(_){ }
-      }
-      function beep(secondsRemaining=30){
-        if(!soundOn||!audioContext||audioContext.state!=='running')return;
-        try{
-          const now=audioContext.currentTime, osc=audioContext.createOscillator(), gain=audioContext.createGain();
-          const expired=secondsRemaining<=0, urgent=secondsRemaining<=10, lastFive=secondsRemaining<=5;
-          // At 10 seconds, the tick jumps up in pitch; at 5 it rises again.
-          // Zero plays a longer, descending buzzer like a countdown clock.
-          const pitch=expired?410:lastFive?1350:urgent?1100:790;
-          const duration=expired?.43:lastFive?.16:urgent?.12:.085;
-          osc.type=expired?'sawtooth':urgent?'triangle':'sine';
-          osc.frequency.setValueAtTime(pitch,now);
-          if(expired)osc.frequency.exponentialRampToValueAtTime(210,now+duration);
-          gain.gain.setValueAtTime(.0001,now);
-          gain.gain.exponentialRampToValueAtTime(expired?.08:urgent?.065:.035,now+.008);
-          gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
-          osc.connect(gain);gain.connect(audioContext.destination);osc.start(now);osc.stop(now+duration+.01);
-        }catch(_){}
-      }
-      function tick(){
-        if(phase!=='playing')return;
-        const now=performance.now();
-        const remaining=Math.max(0,(deadline-now)/1000);
-        const secs=Math.ceil(remaining);
-        if(secs!==latestDisplayed){
-          latestDisplayed=secs;
-          timeText.textContent=fmt(secs);
-          el('timerBox').classList.toggle('urgent',secs<=10);
-          if(secs>0)beep(secs);
-        }
-        if(remaining<=0)finish(false);
-      }
-      function startRound(){
-        if(phase!=='ready')return;
-        ensureAudio();
-        phase='playing';current=0;elapsedStart=performance.now();deadline=elapsedStart+length*1000;
-        el('duration').disabled=true;document.body.classList.add('playing');
-        el('actionDock').classList.add('visible');
-        setView('You’re on!','One player describes the highlighted word. The other guesses. Get every word green!','🔥','',false);
-        el('boardSub').textContent='Explain the highlighted word — then tap an answer.';
-        renderRows();timerHandle=setInterval(tick,80);tick();
-        announce('Round started. Your first letter is '+words[0].letter+'.');
-        scrollActive();
-      }
-      function act(status){
-        if(phase!=='playing')return;
-        if(performance.now()>=deadline){finish(false);return;}
-        const old=current;
-        statuses[old]=status;
-        if(statuses.every(s=>s==='correct')){renderRows();finish(true);return;}
-        // Complete the first pass through the list before revisiting yellow and red entries.
-        let next=-1;
-        for(let i=old+1;i<10;i++)if(statuses[i]==='pending'){next=i;break;}
-        if(next<0)for(let i=0;i<10;i++)if(statuses[i]==='pending'){next=i;break;}
-        if(next<0)for(let step=1;step<=10;step++){
-          const i=(old+step)%10;
-          if(statuses[i]!=='correct'){next=i;break;}
-        }
-        current=next;
-        renderRows();scrollActive();
-        announce(words[old].letter+' '+(status==='correct'?'correct':status==='skipped'?'passed':'missed')+'. Next, '+words[current].letter+'.');
-      }
-      function finish(won){
-        if(phase!=='playing')return;
-        clearTimer();el('actionDock').classList.remove('visible');document.body.classList.remove('playing');
-        phase=won?'won':'lost';
-        el('duration').disabled=false;
-        if(won){
-          const elapsed=Math.round((performance.now()-elapsedStart)/1000);
-          const isRecord=best===null||elapsed<best;
-          if(isRecord){best=elapsed;localStorageSafeSet('worddash-best-time-'+length,String(best));}
-          setView(isRecord?'🏆 New high score!':'🎉 Board cleared!',
-            'All ten words guessed in '+fmt(elapsed)+' with '+fmt(Math.max(0,(deadline-performance.now())/1000))+' left. '+(isRecord?'That’s your fastest round yet!':'Try to beat your best time next round.'),
-            '🎉','↻ Play again');
-          timeText.textContent=fmt(Math.max(0,(deadline-performance.now())/1000));
-          el('boardSub').textContent='Perfect round. All ten words are green!';
-          celebrate();announce('You win! All ten words guessed!');
-        }else{
-          timeText.textContent='00:00';el('timerBox').classList.add('urgent');
-          const solved=statuses.filter(s=>s==='correct').length;
-          setView('⏱ Time’s up!','You cleared '+solved+' of 10 words. Every word has to be green to win. Give it another shot!','💥','↻ Try again');
-          el('boardSub').textContent='Game over. See how close you got.';
-          beep(0);announce('Time is up. You completed '+solved+' out of ten words.');
-        }
-        startBtn.hidden=false;startBtn.disabled=false;
-        renderRows();renderBest();
-        if(matchMedia('(max-width:760px)').matches)requestAnimationFrame(()=>el('stateCard').scrollIntoView({behavior:'smooth',block:'center'}));
-      }
-      function celebrate(){
-        if(!ctx)return;
-        stopConfetti();
-        const resize=()=>{const scale=Math.min(2,devicePixelRatio||1);canvas.width=innerWidth*scale;canvas.height=innerHeight*scale;ctx.setTransform(scale,0,0,scale,0,0);};
-        resize();canvas.style.display='block';
-        const colors=['#c0f96a','#ffd36b','#988bff','#5bea9a','#ff777d','#fff'];
-        particles=Array.from({length:160},()=>({x:Math.random()*innerWidth,y:-20-Math.random()*innerHeight*.75,vx:(Math.random()-.5)*3,vy:2+Math.random()*3,spin:Math.random()*6.28,rot:(Math.random()-.5)*.2,size:4+Math.random()*7,color:pick(colors)}));
-        confettiSince=performance.now();
-        const animate=(time)=>{
-          ctx.clearRect(0,0,innerWidth,innerHeight);
-          particles.forEach(p=>{p.vy+=.035;p.x+=p.vx;p.y+=p.vy;p.spin+=p.rot;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.spin);ctx.fillStyle=p.color;ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*.6);ctx.restore();});
-          if(time-confettiSince<4000){confettiFrame=requestAnimationFrame(animate);}else{stopConfetti();}
-        };
-        confettiFrame=requestAnimationFrame(animate);
-      }
-      el('correctBtn').addEventListener('click',()=>act('correct'));
-      el('passBtn').addEventListener('click',()=>act('skipped'));
-      el('wrongBtn').addEventListener('click',()=>act('incorrect'));
-      startBtn.addEventListener('click',()=>{if(phase==='ready')startRound();else if(phase==='won'||phase==='lost')prepareRound();});
-      el('resetBtn').addEventListener('click',prepareRound);
-      el('duration').addEventListener('change',()=>{if(phase==='ready'||phase==='loading'){length=Number(el('duration').value);best=readBest(length);renderBest();latestDisplayed=length;timeText.textContent=fmt(length);}});
-      el('soundBtn').addEventListener('click',()=>{
-        soundOn=!soundOn;el('soundBtn').textContent=soundOn?'🔊 Sound on':'🔇 Sound off';el('soundBtn').setAttribute('aria-pressed',String(soundOn));
-        if(soundOn)ensureAudio();
-      });
-      document.addEventListener('keydown',event=>{
-        if(event.repeat||event.altKey||event.ctrlKey||event.metaKey||event.target instanceof HTMLSelectElement)return;
-        if(phase==='playing'){
-          if(event.key==='1'||event.key==='ArrowRight'){event.preventDefault();act('correct');}
-          if(event.key==='2'||event.key==='ArrowDown'){event.preventDefault();act('skipped');}
-          if(event.key==='3'||event.key==='ArrowLeft'){event.preventDefault();act('incorrect');}
-        }else if(phase==='ready'&&(event.key===' '||event.key==='Enter')){if(event.target===document.body){event.preventDefault();startRound();}}
-      });
-      renderBest();prepareRound();
-    })();
-  </script>
-</body>
-</html>
+    }).catch(()=>{});
+    if('serviceWorker' in navigator)navigator.serviceWorker.getRegistration().then(r=>r?.update()).catch(()=>{});
+  }
+  el('correctBtn').addEventListener('click',()=>act('correct'));
+  el('passBtn').addEventListener('click',()=>act('skipped'));
+  el('wrongBtn').addEventListener('click',()=>act('incorrect'));
+  startBtn.addEventListener('click',()=>{
+    if(phase==='ready')startRound();else if(phase==='won'||phase==='lost'||phase==='error')prepareRound();
+  });
+  el('resetBtn').addEventListener('click',prepareRound);
+  ['duration','difficulty','letterCount'].forEach(key=>el(key).addEventListener('change',()=>{if(phase!=='playing')prepareRound();}));
+  el('soundBtn').addEventListener('click',()=>{
+    audioOn=!audioOn;
+    el('soundBtn').textContent=audioOn?'🔊 Audio on':'🔇 Audio off';
+    el('soundBtn').setAttribute('aria-pressed',String(audioOn));
+    if(!audioOn)stopSpeech();else ensureAudio();
+  });
+  // touch-action:manipulation removes the 300ms delay and suppresses double-tap zoom.
+  document.addEventListener('keydown',event=>{
+    if(event.repeat||event.altKey||event.ctrlKey||event.metaKey||event.target instanceof HTMLSelectElement)return;
+    if(phase==='playing'){
+      if(event.key==='1'||event.key==='ArrowRight'){event.preventDefault();act('correct');}
+      if(event.key==='2'||event.key==='ArrowDown'){event.preventDefault();act('skipped');}
+      if(event.key==='3'||event.key==='ArrowLeft'){event.preventDefault();act('incorrect');}
+    }else if(phase==='ready'&&(event.key===' '||event.key==='Enter')){
+      if(event.target===document.body){event.preventDefault();startRound();}
+    }
+  });
+  if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{}));}
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkForUpdates();});
+  window.addEventListener('focus',checkForUpdates);
+  setInterval(checkForUpdates,60000);
+  readConfig();renderBest();prepareRound();
+})();</script></body></html>
