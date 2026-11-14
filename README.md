@@ -6,7 +6,7 @@ A fast two-player word-guessing game with consecutive alphabet letters, a countd
 
 1. Open [Word Dash](https://jakerb.github.io/word-dash/). First-time players see a **four-step How to play guide**: the goal, controls and timer, clue-giving tips, and choosing One Device or Duo. Use **Back** and **Next** to navigate; finishing opens the game-mode selector. The modal opens at the top and won't auto-appear after you've completed it on that device. Reopen it using **How to play** on the mode picker or the **📖 / ❔** buttons in the game.
 2. Choose **Play on one device**, **Create a two-player room** or **Join room**.
-3. For a two-device game, the host creates a room and shares the eight-character code or invitation URL.
+3. For a two-device game, the host creates a room and taps **Share invite** to open the phone or tablet's native share sheet (Messages, WhatsApp, AirDrop, etc.). The invite includes the room URL and code. **Copy invite** remains available, and is used as a fallback if native sharing is unsupported.
 4. Both players choose their role for the round: **Describer** or **Guesser**. The selections must be different.
 5. The host chooses the timer (30–300 seconds), difficulty (Easy through Impossible), and number of consecutive alphabet letters (1–26; 26 means A–Z).
 6. When the host presses Start, fresh words load from Datamuse and the timer begins.
