@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Word Dash">
 <meta name="description" content="Word Dash: solo and two-player alphabet word guessing, live API words, adjustable difficulty and a race against the clock.">
 <link rel="manifest" href="./manifest.webmanifest">
-<meta name="worddash-build" content="3.5-native-room-share">
+<meta name="worddash-build" content="3.6-reliable-live-words">
 <style id="worddash-multiplayer-css">
 /* Word Dash: peer-to-peer multiplayer screens. Solo mode keeps the existing layout. */
 [hidden], .mp-app[hidden], .mp-welcome[hidden] {display:none!important}
@@ -535,29 +535,67 @@ body.mp-mode {overflow:hidden}
     if(result.length<7){const start={medium:.15,hard:.38,expert:.60,impossible:.78}[mode];result=ranked.filter(item=>item.rank>=start);}
     return result.length?result:ranked;
   }
-  async function fetchLetter(letter,signal,mode=difficulty){
-    const plans=[{sp:letter.toLowerCase()+'*',max:1000}];
-    if(mode==='expert'||mode==='impossible')plans.push({sp:letter.toLowerCase()+'????*',max:1000});
-    const sets=[];
-    for(const plan of plans){
-      const url='https://api.datamuse.com/words?'+new URLSearchParams({...plan,md:mode==='easy'?'pfs':'pf'}).toString();
-      let response;
-      try{response=await fetch(url,{signal,cache:'no-store'});}catch(err){if(signal.aborted)throw err;continue;}
-      if(!response.ok)continue;
-      const data=await response.json();
-      if(Array.isArray(data))sets.push(...data);
+  // Requests stay API-only. Each letter gets a smaller primary request, a
+  // metadata-light retry, then an alternative Datamuse suggestion endpoint.
+  // A single network or metadata failure must not silently kill the whole round.
+  async function queryWordService(url,signal,timeoutMs=9000){
+    if(signal.aborted)throw new DOMException('Word loading cancelled','AbortError');
+    const controller=new AbortController();
+    const stop=()=>controller.abort();
+    signal.addEventListener('abort',stop,{once:true});
+    const timer=setTimeout(()=>controller.abort(),timeoutMs);
+    try{
+      const response=await fetch(url,{signal:controller.signal,cache:'no-store'});
+      if(!response.ok)throw Error('HTTP '+response.status);
+      const list=await response.json();
+      if(!Array.isArray(list))throw Error('Invalid API reply');
+      return list;
+    }finally{
+      clearTimeout(timer);
+      signal.removeEventListener('abort',stop);
     }
-    if(!sets.length)throw Error('No API words for '+letter);
-    const deduped=[...new Map(sets.map(x=>[String(x.word).toLowerCase(),x])).values()];
-    deduped.sort((a,b)=>(Number.isFinite(freq(b))?freq(b):0)-(Number.isFinite(freq(a))?freq(a):0));
-    const pool=poolForDifficulty(deduped,letter,mode);
-    if(!pool.length)throw Error('No suitable API words for '+letter);
-    return pool;
   }
-  async function fetchAll(letters,signal,mode=difficulty){
-    const result=new Array(letters.length);let next=0;
-    const workers=Array.from({length:Math.min(6,letters.length)},async()=>{
-      while(next<letters.length){const i=next++;result[i]=await fetchLetter(letters[i],signal,mode);}
+  async function fetchLetter(letter,signal,mode=difficulty){
+    const initial=letter.toLowerCase();
+    // Retry using smaller requests before the suggestion endpoint. The first
+    // query still includes frequency and part-of-speech data for difficulty.
+    const plans=[
+      new URL('https://api.datamuse.com/words?'+new URLSearchParams({sp:initial+'*',max:'350',md:'pf'})),
+      new URL('https://api.datamuse.com/words?'+new URLSearchParams({sp:initial+'*',max:'120',md:'p'})),
+      new URL('https://api.datamuse.com/sug?'+new URLSearchParams({s:initial,max:'180'}))
+    ];
+    const failures=[];
+    for(let i=0;i<plans.length;i++){
+      if(signal.aborted)throw new DOMException('Word loading cancelled','AbortError');
+      try{
+        const list=await queryWordService(plans[i].toString(),signal,i===0?9000:6500);
+        const unique=[...new Map(list.filter(item=>item&&typeof item.word==='string').map(item=>[item.word.toLowerCase(),item])).values()];
+        if(!unique.length){failures.push('request '+(i+1)+' returned no results');continue;}
+        unique.sort((a,b)=>{
+          const fa=freq(a),fb=freq(b);
+          // With no frequency metadata, trust the API's popularity order.
+          return (Number.isFinite(fb)?fb:0)-(Number.isFinite(fa)?fa:0);
+        });
+        const pool=poolForDifficulty(unique,letter,mode);
+        if(pool.length)return pool;
+        failures.push('request '+(i+1)+' had no valid single-word answers');
+      }catch(err){
+        if(signal.aborted)throw err;
+        failures.push('request '+(i+1)+': '+(err?.name==='AbortError'?'timed out':(err?.message||'network error')));
+      }
+    }
+    throw Error('Letter '+letter+' failed — '+failures.join('; '));
+  }
+  async function fetchAll(letters,signal,mode=difficulty,onProgress){
+    const result=new Array(letters.length);
+    let next=0,completed=0;
+    const workers=Array.from({length:Math.min(5,letters.length)},async()=>{
+      while(next<letters.length){
+        const i=next++;
+        result[i]=await fetchLetter(letters[i],signal,mode);
+        completed++;
+        if(typeof onProgress==='function')onProgress(completed,letters.length);
+      }
     });
     await Promise.all(workers);
     return result;
@@ -727,8 +765,8 @@ body.mp-mode {overflow:hidden}
   window.WordDashSolo={
     pause:()=>{roundGeneration++;controller?.abort();clearTimer();stopSpeech();},
     restart:()=>prepareRound(),
-    fetchWords:async(letters,mode,signal)=>{
-      const pools=await fetchAll(letters,signal,mode);
+    fetchWords:async(letters,mode,signal,onProgress)=>{
+      const pools=await fetchAll(letters,signal,mode,onProgress);
       return chooseWords(letters,pools);
     },
     ensureAudio,beep,speakLetter,stopSpeech,celebrate
@@ -754,6 +792,7 @@ body.mp-mode {overflow:hidden}
   let roundGeneration = 0, fetchController = null, timer = 0, lastBroadcast = 0, eventSeq = 0;
   let remote = null, remoteTime = 0, lastSpeechEvent = 0, lastBeepSecond = null;
   let libraryPromise = null, winnerCelebrated = false, closing = false, lastFeedback = null;
+  let loadingStatus='',loadingError='';
 
   const shell = document.createElement('section');
   shell.id = 'mpShell'; shell.className = 'mp-app'; shell.hidden = true;
@@ -859,12 +898,12 @@ body.mp-mode {overflow:hidden}
     const role=getRole(),other=otherRole();
     $('mpDescribe').classList.toggle('selected',role==='describer');$('mpGuess').classList.toggle('selected',role==='guesser');
     ['mpDescribe','mpGuess'].forEach(id=>$(id).disabled=phase!=='lobby');
-    $('mpRoleStatus').textContent=phase==='loading'?'Fetching fresh words from the API…':
+    $('mpRoleStatus').textContent=loadingError|| (phase==='loading'?(loadingStatus||'Fetching fresh words from the API…'):
       !guestConnected?'Waiting for the second device to join…':
       !role?'Select whether you are describing or guessing.':
       !other?'Your teammate is choosing a role…':
       role===other?'You both chose the same role. One person needs to switch.':
-      'You are '+ROLE_NAMES[role]+'. Your teammate is '+ROLE_NAMES[other]+'.';
+      'You are '+ROLE_NAMES[role]+'. Your teammate is '+ROLE_NAMES[other]+'.');
     $('mpStart').hidden=mode!=='host';$('mpStart').disabled=!paired()||phase!=='lobby';
     $('mpStart').textContent=phase==='loading'?'Loading words…':paired()?'▶ Start round':'Waiting for roles…';
   }
@@ -875,7 +914,7 @@ body.mp-mode {overflow:hidden}
       letters:words.map(w=>w.letter),statuses:statuses.slice(),current,
       remainingMs:Math.max(0,phase==='playing'?deadline-performance.now():remainingMs),
       words:(end||roleGuest==='describer')?words.map(w=>({letter:w.letter,word:w.word})):null,
-      eventSeq,won:phase==='won'};
+      eventSeq,won:phase==='won',loadingStatus,loadingError};
   }
   function stateForHost(){return {...stateForGuest(),words:words.map(w=>({...w}))};}
   function send(data){if(conn?.open){try{conn.send(data);}catch(_){}}}
@@ -933,7 +972,7 @@ body.mp-mode {overflow:hidden}
     const snapshot=mode==='host'?stateForHost():remote;
     if(!snapshot){renderLobby();return;}
     phase=snapshot.phase;
-    if(mode==='guest'){config=snapshot.config;roleHost=snapshot.hostRole;roleGuest=snapshot.guestRole;}
+    if(mode==='guest'){config=snapshot.config;roleHost=snapshot.hostRole;roleGuest=snapshot.guestRole;loadingStatus=snapshot.loadingStatus||'';loadingError=snapshot.loadingError||'';}
     if(phase==='lobby'||phase==='loading'){renderLobby();return;}
     if(phase==='playing'){renderPlaying(snapshot);return;}
     if(phase==='won'||phase==='lost'){renderResult(snapshot);return;}
@@ -949,7 +988,7 @@ body.mp-mode {overflow:hidden}
     if(mode!=='host')return;
     stopHostRound();roleHost=null;roleGuest=null;words=[];statuses=[];current=-1;
     eventSeq=0;lastSpeechEvent=0;lastBeepSecond=null;winnerCelebrated=false;lastFeedback=null;
-    phase='lobby';remainingMs=config.duration*1000;
+    phase='lobby';remainingMs=config.duration*1000;loadingStatus='';loadingError='';
     broadcast();render();
   }
   function resetWithPrompt(){
@@ -969,15 +1008,25 @@ body.mp-mode {overflow:hidden}
     stopHostRound();const generation=roundGeneration;
     config=chosenConfig();phase='loading';current=-1;eventSeq=0;lastSpeechEvent=0;winnerCelebrated=false;
     words=[];statuses=[];remainingMs=config.duration*1000;
+    loadingStatus='Loading words: 0 / '+config.letterCount;loadingError='';
     broadcast();render();
     const startIndex=Math.floor(Math.random()*(27-config.letterCount));
     const letters=ALPHABET.slice(startIndex,startIndex+config.letterCount).split('');
     fetchController=new AbortController();
-    const timeout=setTimeout(()=>fetchController?.abort(),28000);
-    window.WordDashSolo?.fetchWords?.(letters,config.difficulty,fetchController.signal)
+    const timeout=setTimeout(()=>fetchController?.abort(),Math.max(45000,config.letterCount*3200));
+    const loader=window.WordDashSolo?.fetchWords;
+    if(typeof loader!=='function'){
+      clearTimeout(timeout);loadingError='Word service unavailable in this version. Reload both devices and try again.';phase='lobby';broadcast();render();return;
+    }
+    loader(letters,config.difficulty,fetchController.signal,(done,total)=>{
+      if(generation!==roundGeneration||phase!=='loading')return;
+      loadingStatus='Loading words: '+done+' / '+total;
+      broadcast();render();
+    })
       .then(list=>{
         if(generation!==roundGeneration||phase!=='loading')return;
         if(!Array.isArray(list)||list.length!==config.letterCount)throw Error('Incomplete word list');
+        loadingStatus='';loadingError='';
         words=list;statuses=Array(words.length).fill('pending');current=0;
         phase='playing';lastBeepSecond=null;elapsedStart=performance.now();deadline=elapsedStart+config.duration*1000;remainingMs=config.duration*1000;
         eventSeq++;lastSpeechEvent=eventSeq;
@@ -989,8 +1038,10 @@ body.mp-mode {overflow:hidden}
         console.error('Word Dash room word fetch error',err);
         if(generation!==roundGeneration)return;
         phase='lobby';words=[];statuses=[];current=-1;
+        const detail=err?.name==='AbortError'?'Word API timed out or was cancelled.':String(err?.message||'Unknown network error');
+        loadingStatus='';
+        loadingError='Could not load live words: '+detail+'. Check the connection and tap Start to retry.';
         broadcast();render();
-        $('mpRoleStatus').textContent='Could not load live words. Please try starting again. '+(err?.name==='AbortError'?'API timed out.':'');
       })
       .finally(()=>clearTimeout(timeout));
   }
@@ -1102,7 +1153,7 @@ body.mp-mode {overflow:hidden}
     setWelcomeError('');
     active=true;mode=creating?'host':'guest';closing=false;roleHost=null;roleGuest=null;guestConnected=false;remote=null;
     words=[];statuses=[];current=-1;phase='lobby';eventSeq=0;winnerCelebrated=false;
-    lastFeedback=null;code=creating?newCode():requested;
+    lastFeedback=null;loadingStatus='';loadingError='';code=creating?newCode():requested;
     config={duration:Number($('duration').value)||60,difficulty:$('difficulty').value||'easy',letterCount:Number($('letterCount').value)||10};
     document.body.classList.add('mp-mode');$('mpShell').hidden=false;welcome.hidden=true;
     window.WordDashSolo?.pause?.();
