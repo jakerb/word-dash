@@ -1,24 +1,32 @@
 # Word Dash
 
-A fast, two-player alphabet guessing game. One player describes the word, the other guesses it. Get ten words right before the clock runs out!
+A two-player alphabet guessing game. One player explains the highlighted word; the other guesses it before the clock runs out.
 
-## How to play
+## Gameplay
 
-1. Choose a round length (30, 45, 60, 90 or 120 seconds).
-2. Press **Start round** to reveal ten words on consecutive letters of the alphabet and start the audible countdown.
-3. Tap **👍 Got it** for a correct answer (green), **⏭ Pass** to skip and retry later (yellow), or **👎 Missed** to mark incorrect and retry later (red).
-4. Passed and missed words return after the initial sweep. Win by turning the entire board green before the timer hits zero.
-5. Use **New round** at any time to reset with a new letter sequence and new words.
+- Choose **1–26 consecutive alphabet letters**, defaulting to 10. A 26-letter round runs from A to Z.
+- Choose **Easy, Medium, Hard, Expert or Impossible**. Difficulty is estimated from word frequency, popularity and parts of speech. It is not based just on word length, so difficulty is an approximation.
+- Every new round fetches words live from the [Datamuse API](https://www.datamuse.com/api/). There is **no built-in word bank**. You need an internet connection to generate a round.
+- The app remembers the last 2,200 words on the device and favours unseen answers. It only repeats when the API pool has been exhausted.
+- Press **Start** to reveal the words and hear the first letter spoken out loud. After each answer, the next letter is announced.
+- **👍 Got it** marks a word green; **⏭ Pass** marks it yellow; **👎 Missed** marks it red. Passed and missed words return until all are correct.
+- Every second beeps. At 10 seconds the pitch rises, again at 5, and a game-over tone sounds at zero. Clear the board to stop the clock and trigger confetti.
+- Personal best times are stored separately for each difficulty, time limit and number of letters.
 
-Words are drawn from a hand-picked list of more than 500 familiar, easy-to-describe words (like **chocolate**, **music** and **rent**). The free [Datamuse API](https://www.datamuse.com/api/) can help vary the mix, but unfamiliar API words are filtered out. Rounds avoid X, Y and Z, which are harder to play casually. Best clearing times are stored locally in the browser, separately for each timer duration. Each second has a beep, with a higher-pitched, more urgent sound for the last 10 seconds, another pitch rise at 5 seconds, and a game-over buzzer. Audio is generated using the browser's Web Audio API, and no account or backend is required.
+## iPad, TV and PWA
 
-## Run locally
+The interface fills the available screen height, with a compact grid that automatically changes columns to fit up to 26 letters on an iPad in landscape. Answer controls use touch-action manipulation to avoid double-tap zoom and delayed touch responses.
 
-Open `index.html` in a modern browser. No build tools are required.
+To install on iPad or iPhone, open the [game](https://jakerb.github.io/word-dash/) in Safari, select **Share → Add to Home Screen**, then launch it from the home screen. Other modern browsers can use **Install app** when offered.
 
-## Publish with GitHub Pages
+The PWA uses a **network-first service worker**: reopening it retrieves the latest website from GitHub Pages. While open, it periodically checks for code and stylesheet changes, reloading automatically outside a live round; if you're playing, it delays the reload until the next round. The shell can load offline, but **new game words require the API**.
 
-1. Open **Settings → Pages**. Under **Build and deployment** select **Deploy from a branch**, then `main` and `/(root)`, and click **Save**.
-2. After GitHub has published, open `https://jakerb.github.io/word-dash/`.
+## Hosting
 
-No server-side configuration, credentials, or API key is needed at present; the Datamuse API may require an API key from February 2027, in which case the bundled word bank continues working.
+This repository is published from GitHub Pages (branch **main**, root directory):
+
+**https://jakerb.github.io/word-dash/**
+
+All app files live at the root: `index.html`, `manifest.webmanifest`, `sw.js`, and the two PNG icons. No build tooling or hosting credentials are required.
+
+**Datamuse note:** As of November 2026 the Datamuse service works without an API key. Its documentation says **API keys will be mandatory on 1 February 2027**. At that point, this API-only game will need a secure server-side proxy or an alternative word API; an API key should not be embedded in publicly served JavaScript.
