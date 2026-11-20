@@ -8,7 +8,7 @@
 
 To add a game: create a new subfolder with its own `index.html` (use relative paths), then add a card for it to the list in the root `index.html`. If the game uses a service worker, register it with a scope limited to its folder and give its caches a unique name prefix.
 
-Legacy invite links that point to the root (`/?join=CODE`) are redirected to `/word-dash/?join=CODE`. The root `sw.js` is a retired worker that unregisters the old root-scoped install from before the move.
+The root `sw.js` is a retired worker that unregisters the old root-scoped install from before the move.
 
 ---
 

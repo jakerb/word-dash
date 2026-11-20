@@ -8,13 +8,6 @@
 <meta name="description" content="A collection of quick, free word games you can play in your browser — solo or with friends.">
 <link rel="icon" sizes="192x192" href="./word-dash/icon-192.png">
 <link rel="apple-touch-icon" href="./word-dash/icon-192.png">
-<script>
-  // Old invite links pointed at the site root (e.g. /?join=CODE). Send them to the game.
-  (function(){
-    var params=new URLSearchParams(location.search);
-    if(params.has('join'))location.replace('./word-dash/'+location.search+location.hash);
-  })();
-</script>
 <style>
   :root{color-scheme:dark;--bg:#0c1022;--surface:#141a30;--surface-2:#1c2440;--border:#2d3653;--muted:#a2abc8;--text:#f5f6ff;--lime:#c0f96a;--purple:#988bff}
   *{box-sizing:border-box}
