@@ -5,6 +5,7 @@
 | Game | Folder | URL |
 | --- | --- | --- |
 | Word Dash | `word-dash/` | https://word-dash.site/word-dash/ |
+| Reverse | `reverse/` | https://word-dash.site/reverse/ |
 
 To add a game: create a new subfolder with its own `index.html` (use relative paths), then add a card for it to the list in the root `index.html`. If the game uses a service worker, register it with a scope limited to its folder and give its caches a unique name prefix.
 
@@ -52,3 +53,23 @@ Under **Settings → Pages**, select **Deploy from a branch → main → /(root)
 https://word-dash.site/ (games list) — Word Dash itself is at https://word-dash.site/word-dash/
 
 No build step or API key is required for the current setup. Future changes to Datamuse's API terms or PeerJS Cloud availability may require configuration or another provider.
+
+---
+
+## Reverse
+
+A pass-and-play party game for 2–12 players on one device.
+
+1. Choose how many people are playing and (optionally) enter their names in seating order. First-time players see a four-step **How to play** guide, which can be reopened with **❔ How to play**.
+2. On your turn you're shown a celebrity name. Record yourself saying it.
+3. The name is hidden and your recording plays **backwards**. Listen as often as you like, then record yourself copying that backwards sound.
+4. Pass to the next player. They hear your copy reversed (which should sound like the original name) and guess out loud.
+5. Reveal the answer and tap **Got it!** (the recorder scores +1) or **Didn't get it**. The guesser takes the next turn, round the circle.
+6. The first player to **10 points** wins.
+
+### Technical notes
+
+- **Celebrity names are live, with no hardcoded list.** The game combines the [Wikimedia pageviews API](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/) (the 500 most-read English Wikipedia articles over the last three months) with Wikipedia's [short descriptions](https://www.mediawiki.org/wiki/API:Main_page). It keeps people whose description mentions film, music, sport or TV, and excludes politics, crime and adult content. The list is cached in `localStorage` for a week, and an older cached list is used if a refresh fails. Recently used names are remembered so they don't repeat.
+- **Audio** is captured as raw PCM through the Web Audio API (an AudioWorklet, with a ScriptProcessor fallback), so reversing works the same in every browser. Silence is trimmed and the volume normalised. The microphone is released after each recording. Recordings stay in memory for the current turn only and are never uploaded.
+- Scores are saved in `localStorage`, so an unfinished game can be resumed after a reload.
+- Recording requires HTTPS (GitHub Pages) or `localhost`.

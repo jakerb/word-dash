@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c1022">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Reverse">
+<title>Reverse — The Backwards Celebrity Game</title>
+<meta name="description" content="Reverse: say a celebrity's name, hear it backwards, copy the sound, and see if the next player can work out who it was.">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon.svg">
+<style>
+:root{color-scheme:dark;--bg:#0c1022;--surface:#141a30;--surface-2:#1c2440;--border:#2d3653;--muted:#a2abc8;--text:#f5f6ff;--lime:#c0f96a;--green:#5bea9a;--yellow:#ffd36b;--red:#ff777d;--purple:#988bff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse 55% 38% at 82% 5%,rgba(99,72,180,.18),transparent 75%),radial-gradient(ellipse 45% 38% at 0% 70%,rgba(80,191,141,.08),transparent 75%),var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%;display:flex;flex-direction:column}
+button,input{font:inherit;touch-action:manipulation}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--lime);outline-offset:3px}
+[hidden]{display:none!important}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:max(12px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 8px max(14px,env(safe-area-inset-left));width:min(900px,100%);margin:0 auto}
+.home{color:var(--muted);text-decoration:none;font-weight:800;font-size:14px;white-space:nowrap}
+.home:hover{color:var(--lime)}
+.brand{font-weight:1000;font-size:clamp(20px,3vw,26px);letter-spacing:-1px}
+.brand span{color:var(--lime)}
+.top-actions{display:flex;gap:8px}
+.chip-btn{border:1px solid #47526e;background:#252d48;border-radius:12px;color:var(--text);font-weight:850;font-size:13px;min-height:38px;padding:7px 12px;white-space:nowrap}
+
+.scores{display:flex;gap:8px;overflow-x:auto;padding:4px max(14px,env(safe-area-inset-right)) 8px max(14px,env(safe-area-inset-left));width:min(900px,100%);margin:0 auto;scrollbar-width:none}
+.scores::-webkit-scrollbar{display:none}
+.score{flex:none;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:999px;background:#1c2440;border:1px solid #34405b;font-size:13px;font-weight:800;color:#d3dcf8}
+.score b{color:var(--text);font-size:15px}
+.score.turn{border-color:var(--lime);background:#26331f;color:#e3ffbf}
+.score.guess{border-color:var(--purple);background:#262448}
+
+.stage{flex:1;display:flex;align-items:center;justify-content:center;padding:10px max(14px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+.card{width:min(560px,100%);background:var(--surface);border:1px solid var(--border);border-radius:24px;box-shadow:0 20px 70px rgba(0,0,0,.28);padding:clamp(20px,4vw,32px);text-align:center}
+.kicker{font-size:11px;color:var(--lime);font-weight:900;letter-spacing:1.8px;text-transform:uppercase;margin:0 0 10px}
+.card h1{font-size:clamp(26px,5vw,38px);letter-spacing:-1px;line-height:1.08;margin:0 0 10px}
+.lead{color:var(--muted);font-size:clamp(14px,2vw,16px);line-height:1.5;margin:0 0 20px}
+.lead strong{color:var(--text)}
+.btn{display:block;width:100%;border:0;border-radius:16px;min-height:56px;padding:14px 18px;font-weight:950;font-size:17px;background:var(--lime);color:#17200e;margin-top:10px}
+.btn:hover:not(:disabled){filter:brightness(1.06)}
+.btn:active:not(:disabled){transform:scale(.985)}
+.btn.secondary{background:#252d48;color:var(--text);border:1px solid #47526e}
+.btn.purple{background:var(--purple);color:#17142a}
+.btn.green{background:var(--green);color:#0c321d}
+.btn.red{background:var(--red);color:#38121a}
+.btn.rec{background:var(--red);color:#38121a}
+.btn.rec.on{animation:pulse 1.1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 10px rgba(255,119,125,.18)}}
+.link{background:none;border:0;color:#c9d2eb;text-decoration:underline;text-underline-offset:3px;font-size:14px;font-weight:750;padding:12px 6px 2px}
+.link:hover{color:var(--lime)}
+.row{display:flex;gap:10px}
+.row .btn{flex:1}
+
+.stepper{display:flex;align-items:center;justify-content:center;gap:18px;margin:8px 0 18px}
+.stepper button{width:60px;height:60px;border-radius:18px;border:1px solid #47526e;background:#252d48;color:var(--text);font-size:28px;font-weight:900}
+.stepper output{font-size:64px;font-weight:1000;min-width:90px;letter-spacing:-2px}
+.names{display:grid;gap:9px;margin:0 0 8px;text-align:left}
+.names label{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:850;color:var(--muted)}
+.names label span{min-width:22px;height:22px;border-radius:50%;background:#252d48;display:grid;place-items:center;font-size:12px;color:var(--text)}
+.names input{flex:1;min-width:0;min-height:48px;border-radius:12px;border:1px solid #3b4766;background:#0f1428;color:var(--text);padding:10px 13px;font-size:16px}
+
+.celeb{font-size:clamp(32px,8vw,52px);font-weight:1000;letter-spacing:-1.5px;line-height:1.05;margin:4px 0 8px;word-break:break-word}
+.celeb-desc{color:var(--muted);font-size:14px;margin:0 0 18px}
+.hidden-name{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:850;color:#c8d6ed;background:#1c2440;border:1px dashed #47526e;border-radius:999px;padding:8px 14px;margin:0 0 16px}
+
+.wave{position:relative;background:#0f1428;border:1px solid #2d3653;border-radius:16px;margin:4px 0 6px;overflow:hidden}
+.wave canvas{display:block;width:100%;height:84px}
+.meter{height:10px;border-radius:10px;background:#0f1428;border:1px solid #2d3653;overflow:hidden;margin:14px 0 4px}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red));transition:width .06s}
+.rec-time{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted);font-weight:800}
+.msg{border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.4;margin:12px 0 0;text-align:left}
+.msg.error{background:#49292e;color:#ffd7da;border:1px solid #805064}
+.msg.info{background:#1c2642;color:#c7d2ed;border:1px solid #34425f}
+.steps{display:flex;gap:6px;justify-content:center;margin:0 0 14px}
+.steps i{width:28px;height:5px;border-radius:5px;background:#34405d}
+.steps i.on{background:var(--lime)}
+.trophy{font-size:64px;line-height:1;margin-bottom:8px}
+.final{list-style:none;padding:0;margin:0 0 14px;text-align:left;display:grid;gap:7px}
+.final li{display:flex;justify-content:space-between;padding:11px 14px;border-radius:12px;background:#1c2440;border:1px solid #34405b;font-weight:850}
+.final li:first-child{background:#26331f;border-color:var(--lime)}
+.spinner{width:34px;height:34px;border-radius:50%;border:4px solid #34405d;border-top-color:var(--lime);animation:spin .9s linear infinite;margin:6px auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;left:50%;bottom:max(22px,env(safe-area-inset-bottom));transform:translateX(-50%);background:#26331f;border:1px solid var(--lime);color:#e3ffbf;padding:11px 18px;border-radius:999px;font-weight:900;box-shadow:0 12px 40px #0008;z-index:5}
+.source{color:#7d88a8;font-size:12px;margin:16px 0 0}
+.source a{color:inherit}
+
+/* How to play modal — same flow and look as Word Dash. */
+.guide{position:fixed;inset:0;margin:auto;border:1px solid #485477;border-radius:24px;background:#141b32;color:#f5f6ff;box-shadow:0 28px 90px #0009;width:min(570px,calc(100vw - 24px));max-height:calc(100dvh - 26px);padding:0;overflow:auto;overscroll-behavior:contain}
+.guide::backdrop{background:rgba(6,10,24,.84);backdrop-filter:blur(7px)}
+.guide-inner{padding:clamp(17px,3vw,30px)}
+.guide-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.guide-kicker{font-size:11px;font-weight:900;letter-spacing:1.8px;text-transform:uppercase;color:var(--lime)}
+.guide-step{font-size:11px;color:#aebbdc;border:1px solid #3c4869;border-radius:50px;padding:6px 10px;white-space:nowrap}
+.guide-progress{display:flex;gap:6px;margin:12px 0 17px}
+.guide-progress span{height:5px;flex:1;border-radius:8px;background:#34405d}
+.guide-progress span.active{background:var(--lime)}
+.guide-title{font-size:clamp(25px,4vw,34px);line-height:1.05;font-weight:950;letter-spacing:-1.25px;margin:0 0 9px;outline:none}
+.guide-lead{color:#c4cde6;line-height:1.45;margin:0 0 10px;font-size:clamp(13px,1.6vw,16px)}
+.guide-feature{border:1px solid #34425f;background:#1c2642;border-radius:14px;padding:14px;margin:12px 0}
+.guide-feature h3{font-size:12px;font-weight:950;letter-spacing:1px;color:#dce6fb;text-transform:uppercase;margin:0 0 8px}
+.guide-feature p{margin:0;font-size:14px;line-height:1.55;color:#c7d2ed}
+.guide-feature strong{color:#fff}
+.guide-flow{display:grid;gap:6px;margin:12px 0}
+.guide-flow div{display:flex;gap:10px;align-items:center;border-radius:10px;background:#1c2642;border:1px solid #34425f;padding:9px 11px;font-size:13px;line-height:1.35;color:#c7d2ed}
+.guide-flow b{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--lime);color:#17200e;font-size:12px}
+.guide-flow em{color:#fff;font-style:normal;font-weight:850}
+.guide-control{display:flex;align-items:center;gap:10px;border-radius:9px;padding:10px;font-size:13px;line-height:1.35;margin:7px 0}
+.guide-control b{min-width:110px}
+.guide-control.green{background:#183d31;color:#b9f8d5}.guide-control.red{background:#49292e;color:#ffbabd}
+.guide-tip{font-size:13px;line-height:1.4;color:#cdd6eb;padding:11px 13px;border-radius:9px;background:#27334f;margin:7px 0}
+.guide-tip strong{display:block;color:#fff;margin-bottom:3px}
+.guide-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;border-top:1px solid #34405d;padding-top:14px}
+.guide-note{font-size:12px;color:#aab7d6;line-height:1.4}
+.guide-buttons{display:flex;gap:9px;flex-shrink:0}
+.guide-back{border:1px solid #4a5674;color:#e0e8fb;background:#25304d;border-radius:12px;min-height:46px;padding:10px 17px;font-size:14px;font-weight:850}
+.guide-next{border:0;border-radius:12px;background:var(--lime);color:#17200e;font-size:14px;font-weight:950;min-height:46px;min-width:145px;padding:10px 18px}
+@media(max-width:520px){
+  .guide-footer{flex-direction:column;align-items:stretch}
+  .guide-buttons{width:100%}
+  .guide-back,.guide-next{flex:1;min-width:0}
+  .home-label{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="home" href="../" aria-label="All games">← <span class="home-label">Games</span></a>
+  <div class="brand" aria-label="Reverse">Re<span>verse</span></div>
+  <div class="top-actions">
+    <button class="chip-btn" id="helpBtn" type="button">❔ How to play</button>
+    <button class="chip-btn" id="quitBtn" type="button" hidden>New game</button>
+  </div>
+</header>
+<div class="scores" id="scores" hidden aria-label="Scores"></div>
+<main class="stage" id="stage" aria-live="polite"></main>
+
+<dialog id="guide" class="guide" aria-labelledby="guideTitle">
+ <div class="guide-inner">
+  <div class="guide-top">
+   <span class="guide-kicker">🔁 Reverse · How to play</span>
+   <span class="guide-step" id="guideCount">STEP 1 OF 4</span>
+  </div>
+  <div class="guide-progress" id="guideProgress"><span></span><span></span><span></span><span></span></div>
+  <h2 class="guide-title" id="guideTitle" tabindex="-1"></h2>
+  <p class="guide-lead" id="guideLead"></p>
+
+  <section data-step="0">
+   <div class="guide-feature">
+    <h3>🎙 Say a celebrity</h3>
+    <p>On your turn you're secretly shown a <strong>famous name</strong>. Record yourself saying it normally.</p>
+   </div>
+   <div class="guide-feature">
+    <h3>🔁 Copy the backwards sound</h3>
+    <p>The name disappears and the game plays your recording <strong>in reverse</strong>. Copy that strange sound as closely as you can, and record your copy.</p>
+   </div>
+  </section>
+
+  <section data-step="1" hidden>
+   <div class="guide-flow">
+    <div><b>1</b><span>You see <em>John Cena</em> and say it.</span></div>
+    <div><b>2</b><span>Reversed, it sounds like <em>“Anek Nohj”</em>.</span></div>
+    <div><b>3</b><span>You say <em>“Anek Nohj”</em> back into the game.</span></div>
+    <div><b>4</b><span>The game reverses your copy for the next player. It should sound a bit like <em>John Cena</em>!</span></div>
+    <div><b>5</b><span>They guess who it is out loud.</span></div>
+   </div>
+  </section>
+
+  <section data-step="2" hidden>
+   <div class="guide-control green"><b>✓ Got it!</b><span>The guesser named the celebrity. The player who recorded scores <strong>+1</strong>.</span></div>
+   <div class="guide-control red"><b>✗ Didn't get it</b><span>No points this time.</span></div>
+   <div class="guide-feature">
+    <h3>🔄 Pass it round</h3>
+    <p>The guesser takes the next turn, passing it on to the person beside them. Turns go round the circle, and the <strong>first player to 10 points wins</strong>.</p>
+   </div>
+  </section>
+
+  <section data-step="3" hidden>
+   <div class="guide-tip"><strong>🎤 Allow the microphone</strong>Your browser will ask the first time you record. Recordings are only kept for the current turn and never leave your device.</div>
+   <div class="guide-tip"><strong>🤫 Keep it secret</strong>Don't let the next player see the name or hear your first recording.</div>
+   <div class="guide-tip"><strong>🗣 Overact it</strong>Exaggerate the backwards vowels and keep the rhythm. Listen as many times as you like before recording your copy.</div>
+   <div class="guide-tip"><strong>🔇 Find a quiet spot</strong>Hold the phone close and say the name clearly. Background noise makes the reversed sound harder to copy.</div>
+  </section>
+
+  <div class="guide-footer">
+   <span class="guide-note" id="guideNote"></span>
+   <div class="guide-buttons">
+    <button type="button" class="guide-back" id="guideBack" hidden>← Back</button>
+    <button type="button" class="guide-next" id="guideNext">Next →</button>
+   </div>
+  </div>
+ </div>
+</dialog>
+
+<script>
+(()=>{
+'use strict';
+const WIN=10, MIN_PLAYERS=2, MAX_PLAYERS=12, MAX_SECONDS=10;
+const KEYS={save:'reverse-game-v1',seen:'reverse-howto-seen',used:'reverse-used-names',pool:'reverse-celebs-v1'};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const readJSON=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch(_){return f;}};
+const writeJSON=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(_){}};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- Celebrity names, live from Wikipedia ----------
+   1. Wikimedia pageviews: the most-read English Wikipedia articles over the last few months.
+   2. Wikipedia short descriptions: keep people in film, music, sport and TV.
+   Cached on the device for a week, so a game only hits the APIs occasionally. */
+const Celebs=(()=>{
+  const WEEK=7*24*3600e3, TITLES=500;
+  const PERSON=/\((?:born \d{4}|b\. \d{4}|\d{4}\s*[–-]\s*\d{4})\)/;
+  const GOOD=/\b(actor|actress|singer|rapper|musician|songwriter|comedian|presenter|footballer|football player|soccer player|basketball player|tennis player|boxer|wrestler|youtuber|model|racing driver|golfer|cricketer|chef|filmmaker|film director|dj|record producer|sprinter|swimmer|gymnast|athlete|quarterback|baseball player|ice hockey player|entertainer|magician|streamer|dancer|skater|cyclist|martial artist|guitarist|drummer|pianist|composer|broadcaster|television host|talk show host)\b/i;
+  const BAD=/\b(politician|president|criminal|murder|murderer|killer|suspect|terrorist|assassin|convicted|offender|dictator|serial|militant|minister|senator|governor|shooter|diplomat|government|political|pornographic|adult film|royal family)\b/i;
+  const SKIP=/^(Main_Page|Special:|Wikipedia:|Portal:|File:|Help:|Talk:|User:|Template:|Category:|Deaths_in)/;
+  let pool=null, loading=null;
+  const cached=readJSON(KEYS.pool,null);
+  if(cached&&Array.isArray(cached.names)&&cached.names.length)pool=cached;
+
+  async function getJSON(url,tries=3){
+    let last;
+    for(let i=0;i<tries;i++){
+      try{
+        const r=await fetch(url,{cache:'no-store'});
+        if(r.ok)return await r.json();
+        last=new Error('HTTP '+r.status);
+        if(r.status!==429&&r.status<500)break;
+      }catch(e){last=e;}
+      await sleep(700*(i+1)*(i+1));
+    }
+    throw last;
+  }
+  function recentMonths(n){
+    const out=[],d=new Date();d.setUTCDate(1);
+    for(let i=0;i<n;i++){d.setUTCMonth(d.getUTCMonth()-1);out.push([d.getUTCFullYear(),String(d.getUTCMonth()+1).padStart(2,'0')]);}
+    return out;
+  }
+  async function topTitles(){
+    const views=new Map();
+    const results=await Promise.allSettled(recentMonths(3).map(([y,m])=>getJSON(`https://wikimedia.org/api/rest_v1/metrics/pageviews/top/en.wikipedia/all-access/${y}/${m}/all-days`)));
+    for(const res of results){
+      if(res.status!=='fulfilled')continue;
+      for(const a of res.value?.items?.[0]?.articles||[]){
+        if(SKIP.test(a.article))continue;
+        views.set(a.article,(views.get(a.article)||0)+a.views);
+      }
+    }
+    if(!views.size)throw new Error('Wikipedia pageviews unavailable');
+    return [...views.entries()].sort((a,b)=>b[1]-a[1]).slice(0,TITLES).map(([t])=>t.replace(/_/g,' '));
+  }
+  async function describe(titles,onProgress){
+    const batches=[];for(let i=0;i<titles.length;i+=50)batches.push(titles.slice(i,i+50));
+    const out=[];let done=0,failed=0;
+    // Two at a time keeps us well inside Wikipedia's anonymous rate limits.
+    async function worker(){
+      while(batches.length){
+        const batch=batches.shift();
+        const params=new URLSearchParams({action:'query',format:'json',formatversion:'2',prop:'description',redirects:'1',origin:'*',titles:batch.join('|')});
+        try{
+          const data=await getJSON('https://en.wikipedia.org/w/api.php?'+params);
+          for(const p of data?.query?.pages||[])if(p.description)out.push([p.title,p.description]);
+        }catch(_){failed++;}
+        done++;onProgress?.(done/(done+batches.length));
+      }
+    }
+    await Promise.all([worker(),worker()]);
+    if(!out.length)throw new Error('Wikipedia descriptions unavailable');
+    return out;
+  }
+  function clean(title){return title.replace(/\s*\([^)]*\)\s*$/,'').trim();}
+  async function refresh(onProgress){
+    const titles=await topTitles();
+    const described=await describe(titles,onProgress);
+    const seen=new Set(),names=[];
+    for(const [title,desc] of described){
+      if(!PERSON.test(desc)||!GOOD.test(desc)||BAD.test(desc))continue;
+      const name=clean(title);
+      if(!name||name.length>32||/\d/.test(name)||seen.has(name))continue;
+      seen.add(name);names.push({name,desc});
+    }
+    if(names.length<20)throw new Error('Not enough celebrity names found');
+    pool={names,at:Date.now()};writeJSON(KEYS.pool,pool);
+    return pool;
+  }
+  function load(onProgress){
+    if(pool&&Date.now()-pool.at<WEEK)return Promise.resolve(pool);
+    if(!loading)loading=refresh(onProgress).catch(err=>{
+      if(pool)return pool; // A stale list beats no list.
+      throw err;
+    }).finally(()=>{loading=null;});
+    return loading;
+  }
+  async function next(){
+    const {names}=await load();
+    let used=readJSON(KEYS.used,[]);
+    let options=names.filter(n=>!used.includes(n.name));
+    if(!options.length){used=[];options=names;}
+    const pick=options[Math.floor(Math.random()*options.length)];
+    used.push(pick.name);writeJSON(KEYS.used,used.slice(-400));
+    return pick;
+  }
+  return {load,next,ready:()=>!!pool};
+})();
+
+/* ---------- Audio: raw microphone capture, so reversing works the same in every browser ---------- */
+const Sound=(()=>{
+  let ctx=null,stream=null,src=null,node=null,sink=null,chunks=[],levelCb=null,playing=null,workletReady=null;
+  const WORKLET="registerProcessor('reverse-capture',class extends AudioWorkletProcessor{process(i){const c=i[0]&&i[0][0];if(c&&c.length)this.port.postMessage(c.slice(0));return true;}});";
+  function context(){
+    if(!ctx){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)throw Object.assign(new Error('Audio is not supported in this browser.'),{name:'NotSupportedError'});ctx=new AC();}
+    if(ctx.state!=='running')ctx.resume().catch(()=>{});
+    return ctx;
+  }
+  function loadWorklet(c){
+    if(!c.audioWorklet||typeof AudioWorkletNode==='undefined')return Promise.resolve(false);
+    if(!workletReady){
+      const url=URL.createObjectURL(new Blob([WORKLET],{type:'application/javascript'}));
+      workletReady=c.audioWorklet.addModule(url).then(()=>true,()=>false);
+    }
+    return workletReady;
+  }
+  function push(data){
+    chunks.push(data);
+    if(levelCb){let peak=0;for(let i=0;i<data.length;i++){const v=data[i]<0?-data[i]:data[i];if(v>peak)peak=v;}levelCb(peak);}
+  }
+  async function start(onLevel){
+    stopPlayback();
+    const c=context(); // Must run inside the tap for iOS.
+    if(!navigator.mediaDevices?.getUserMedia)throw Object.assign(new Error('Recording is not supported in this browser.'),{name:'NotSupportedError'});
+    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    chunks=[];levelCb=onLevel;
+    src=c.createMediaStreamSource(stream);
+    sink=c.createGain();sink.gain.value=0;sink.connect(c.destination);
+    if(await loadWorklet(c)){
+      node=new AudioWorkletNode(c,'reverse-capture',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1]});
+      node.port.onmessage=e=>push(e.data);
+    }else{
+      node=c.createScriptProcessor(4096,1,1);
+      node.onaudioprocess=e=>push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    }
+    src.connect(node);node.connect(sink);
+  }
+  function release(){
+    if(node){if(node.port)node.port.onmessage=null;else node.onaudioprocess=null;}
+    try{src?.disconnect();node?.disconnect();sink?.disconnect();}catch(_){}
+    // Closing the mic straight away also stops iOS routing playback to the quiet earpiece.
+    stream?.getTracks().forEach(t=>t.stop());
+    stream=src=node=sink=null;levelCb=null;
+  }
+  function stop(){
+    release();
+    const len=chunks.reduce((a,c)=>a+c.length,0),data=new Float32Array(len);
+    let o=0;for(const c of chunks){data.set(c,o);o+=c.length;}
+    chunks=[];
+    return tidy(data,ctx.sampleRate);
+  }
+  // Trim silence from both ends and normalise volume, so reversed clips start right away.
+  function tidy(data,rate){
+    let peak=0;for(let i=0;i<data.length;i++){const v=Math.abs(data[i]);if(v>peak)peak=v;}
+    if(peak<0.015)return null;
+    const thr=Math.max(0.01,peak*0.06);
+    let s=0,e=data.length-1;
+    while(s<data.length&&Math.abs(data[s])<thr)s++;
+    while(e>s&&Math.abs(data[e])<thr)e--;
+    const pad=Math.round(rate*0.08);s=Math.max(0,s-pad);e=Math.min(data.length-1,e+pad);
+    const len=e-s+1;if(len<rate*0.15)return null;
+    const gain=Math.min(8,0.9/peak),buf=ctx.createBuffer(1,len,rate),out=buf.getChannelData(0);
+    for(let i=0;i<len;i++)out[i]=data[s+i]*gain;
+    const f=Math.min(Math.round(rate*0.01),len>>2);
+    for(let i=0;i<f;i++){const k=i/f;out[i]*=k;out[len-1-i]*=k;}
+    return buf;
+  }
+  function reversed(buf){
+    const r=ctx.createBuffer(buf.numberOfChannels,buf.length,buf.sampleRate);
+    for(let ch=0;ch<buf.numberOfChannels;ch++){const d=new Float32Array(buf.getChannelData(ch));d.reverse();r.copyToChannel?r.copyToChannel(d,ch):r.getChannelData(ch).set(d);}
+    return r;
+  }
+  function play(buf,onEnd){
+    stopPlayback();
+    const c=context(),s=c.createBufferSource();
+    s.buffer=buf;s.connect(c.destination);
+    const entry={s,onEnd,start:c.currentTime,duration:buf.duration};
+    playing=entry;
+    s.onended=()=>{if(playing===entry){playing=null;onEnd?.();}};
+    s.start();
+    return entry;
+  }
+  function stopPlayback(){if(playing){const p=playing;playing=null;try{p.s.stop();}catch(_){}p.onEnd?.();}}
+  const progress=entry=>ctx&&entry?Math.min(1,(ctx.currentTime-entry.start)/entry.duration):0;
+  return {start,stop,release,reversed,play,stopPlayback,progress,isPlaying:e=>playing===e};
+})();
+
+/* ---------- Game state ---------- */
+let game=readJSON(KEYS.save,null); // {players:[{name,score}], current}
+let view={screen:'count',count:3};
+let turn=null; // {celeb, original, originalRev, copy, copyRev, played}
+let recording=null;
+const stage=$('stage');
+
+const save=()=>{if(game)writeJSON(KEYS.save,game);else{try{localStorage.removeItem(KEYS.save);}catch(_){}}};
+const recorder=()=>game.players[game.current];
+const guesser=()=>game.players[(game.current+1)%game.players.length];
+
+function renderScores(){
+  const box=$('scores');
+  const inGame=!!game&&view.screen!=='count'&&view.screen!=='names';
+  box.hidden=!inGame;$('quitBtn').hidden=!inGame;
+  if(!inGame)return;
+  const guessing=view.screen==='guess'||view.screen==='verdict';
+  box.innerHTML=game.players.map((p,i)=>{
+    const cls=i===game.current?' turn':(guessing&&i===(game.current+1)%game.players.length?' guess':'');
+    return `<div class="score${cls}">${esc(p.name)} <b>${p.score}</b></div>`;
+  }).join('');
+  box.querySelector('.turn')?.scrollIntoView({inline:'nearest',block:'nearest'});
+}
+
+function stepDots(n){return `<div class="steps" aria-hidden="true">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;}
+function waveBlock(id,label,cls='purple'){
+  return `<div class="wave"><canvas id="${id}Wave"></canvas></div><button class="btn ${cls}" id="${id}Play" type="button">▶ ${label}</button>`;
+}
+function recordBlock(label){
+  return `<button class="btn rec" id="recBtn" type="button">🎙 ${label}</button>
+  <div id="recInfo" hidden><div class="meter"><i id="recLevel"></i></div><span class="rec-time" id="recTime">0.0s</span></div>
+  <div id="recMsg"></div>`;
+}
+
+function show(screen,extra={}){
+  if(recording)cancelRecording();
+  Sound.stopPlayback();
+  view={...view,screen,...extra};
+  renderScores();
+  stage.innerHTML=screens[screen]();
+  binds[screen]?.();
+  stage.querySelector('h1')?.focus?.({preventScroll:true});
+  window.scrollTo(0,0);
+}
+
+const screens={
+  count:()=>`<section class="card">
+    <p class="kicker">New game</p>
+    <h1>How many people are playing?</h1>
+    <p class="lead">Reverse is for 2 or more players sharing one phone. Sit in a circle; you'll pass it to the person beside you each turn.</p>
+    <div class="stepper"><button type="button" id="minus" aria-label="Fewer players">−</button><output id="countOut">${view.count}</output><button type="button" id="plus" aria-label="More players">+</button></div>
+    <button class="btn" id="toNames" type="button">Next →</button>
+    ${game?`<button class="btn secondary" id="resume" type="button">Resume game (${game.players.map(p=>esc(p.name)+' '+p.score).join(' · ')})</button>`:''}
+    <p class="source">Celebrity names come from Wikipedia's most-read pages.</p>
+  </section>`,
+  names:()=>`<section class="card">
+    <p class="kicker">${view.count} players</p>
+    <h1>Who's playing?</h1>
+    <p class="lead">Enter names in the order you're sitting. Leave any blank to use “Player 1”, “Player 2”…</p>
+    <form id="namesForm"><div class="names">${Array.from({length:view.count},(_,i)=>`<label><span>${i+1}</span><input name="p${i}" maxlength="18" autocomplete="off" placeholder="Player ${i+1}" value="${esc(view.names?.[i]||'')}"></label>`).join('')}</div>
+    <button class="btn" type="submit">Start game →</button></form>
+    <button class="link" id="backCount" type="button">← Change number of players</button>
+  </section>`,
+  handoff:()=>`<section class="card">
+    ${view.note?`<p class="kicker">${esc(view.note)}</p>`:'<p class="kicker">Next turn</p>'}
+    <h1 tabindex="-1">Pass to ${esc(recorder().name)}</h1>
+    <p class="lead"><strong>${esc(recorder().name)}</strong>, it's your turn. Keep the screen hidden from <strong>${esc(guesser().name)}</strong>; they'll be guessing.</p>
+    <button class="btn" id="reveal" type="button">I'm ${esc(recorder().name)}: show my celebrity</button>
+  </section>`,
+  loading:()=>`<section class="card">
+    <div class="spinner" aria-hidden="true"></div>
+    <h1 tabindex="-1">Finding a celebrity…</h1>
+    <p class="lead" id="loadText">Fetching popular names from Wikipedia.</p>
+  </section>`,
+  loadError:()=>`<section class="card">
+    <p class="kicker">Couldn't load names</p>
+    <h1 tabindex="-1">No celebrities right now</h1>
+    <p class="lead">Reverse gets its celebrity names live from Wikipedia, and that didn't work just now. Check your connection and try again.</p>
+    <div class="msg error">${esc(view.error||'Unknown error')}</div>
+    <button class="btn" id="retry" type="button">↻ Try again</button>
+  </section>`,
+  say:()=>`<section class="card">
+    ${stepDots(1)}
+    <p class="kicker">${esc(recorder().name)} · Step 1 of 3</p>
+    <h1 tabindex="-1">Say this name out loud</h1>
+    <div class="celeb">${esc(turn.celeb.name)}</div>
+    <p class="celeb-desc">${esc(turn.celeb.desc)}</p>
+    ${recordBlock('Record name')}
+    <button class="link" id="skip" type="button">Don't know them? Skip this name</button>
+  </section>`,
+  listen:()=>`<section class="card">
+    ${stepDots(2)}
+    <p class="kicker">${esc(recorder().name)} · Step 2 of 3</p>
+    <h1 tabindex="-1">Now copy it backwards</h1>
+    <div class="hidden-name">🙈 Name hidden</div>
+    <p class="lead">Listen to your recording reversed as many times as you like, then record yourself copying the sound.</p>
+    ${waveBlock('orig','Play it backwards')}
+    <div style="height:8px"></div>
+    ${recordBlock('Record my copy')}
+    <button class="link" id="redoName" type="button">↺ Re-record the name</button>
+  </section>`,
+  copied:()=>`<section class="card">
+    ${stepDots(3)}
+    <p class="kicker">${esc(recorder().name)} · Step 3 of 3</p>
+    <h1 tabindex="-1">Copy recorded!</h1>
+    <p class="lead">Happy with it? Hand the phone to <strong>${esc(guesser().name)}</strong>. They'll hear your copy flipped the right way round.</p>
+    <button class="btn" id="toGuess" type="button">Pass to ${esc(guesser().name)} →</button>
+    <div class="row"><button class="btn secondary" id="redoCopy" type="button">↺ Try again</button><button class="btn secondary" id="replayOrig" type="button">▶ Hear original</button></div>
+  </section>`,
+  guess:()=>`<section class="card">
+    <p class="kicker">${esc(guesser().name)} is guessing</p>
+    <h1 tabindex="-1">Who is it?</h1>
+    <p class="lead"><strong>${esc(guesser().name)}</strong>, play the clip and say out loud which celebrity you think it is. You can listen as many times as you like.</p>
+    ${waveBlock('copy','Play the clip')}
+    <button class="btn secondary" id="revealAnswer" type="button" disabled>Reveal the answer</button>
+  </section>`,
+  verdict:()=>`<section class="card">
+    <p class="kicker">The answer was</p>
+    <div class="celeb" tabindex="-1">${esc(turn.celeb.name)}</div>
+    <p class="celeb-desc">${esc(turn.celeb.desc)}</p>
+    <h1 style="font-size:22px">Did ${esc(guesser().name)} get it?</h1>
+    <div class="row"><button class="btn green" id="gotIt" type="button">✓ Got it!</button><button class="btn red" id="missed" type="button">✗ Didn't get it</button></div>
+    <button class="link" id="replayCopy" type="button">▶ Play the clip again</button>
+  </section>`,
+  win:()=>{
+    const ranked=game.players.map(p=>p).sort((a,b)=>b.score-a.score);
+    return `<section class="card">
+      <div class="trophy" aria-hidden="true">🏆</div>
+      <p class="kicker">First to ${WIN}</p>
+      <h1 tabindex="-1">${esc(view.winner)} wins!</h1>
+      <ol class="final">${ranked.map(p=>`<li><span>${esc(p.name)}</span><span>${p.score}</span></li>`).join('')}</ol>
+      <button class="btn" id="again" type="button">Play again with the same players</button>
+      <button class="btn secondary" id="fresh" type="button">New players</button>
+    </section>`;
+  }
+};
+
+const binds={
+  count(){
+    const set=n=>{view.count=Math.max(MIN_PLAYERS,Math.min(MAX_PLAYERS,n));$('countOut').textContent=view.count;$('minus').disabled=view.count<=MIN_PLAYERS;$('plus').disabled=view.count>=MAX_PLAYERS;};
+    set(view.count);
+    $('minus').onclick=()=>set(view.count-1);
+    $('plus').onclick=()=>set(view.count+1);
+    $('toNames').onclick=()=>show('names');
+    if($('resume'))$('resume').onclick=()=>show('handoff',{note:'Welcome back'});
+    Celebs.load().catch(()=>{}); // Warm the name list while people type names.
+  },
+  names(){
+    $('backCount').onclick=()=>{view.names=collectNames();show('count');};
+    $('namesForm').onsubmit=e=>{
+      e.preventDefault();
+      const names=collectNames();
+      game={players:names.map((n,i)=>({name:n||`Player ${i+1}`,score:0})),current:0};
+      view.names=names;save();
+      show('handoff',{note:'Game on!'});
+    };
+    stage.querySelector('input')?.focus();
+  },
+  handoff(){$('reveal').onclick=startTurn;},
+  loadError(){$('retry').onclick=startTurn;},
+  say(){
+    bindRecord(buf=>{turn.original=buf;turn.originalRev=Sound.reversed(buf);show('listen');});
+    $('skip').onclick=startTurn;
+  },
+  listen(){
+    bindPlayer('orig',()=>turn.originalRev);
+    bindRecord(buf=>{turn.copy=buf;turn.copyRev=Sound.reversed(buf);show('copied');});
+    $('redoName').onclick=()=>show('say');
+  },
+  copied(){
+    $('toGuess').onclick=()=>show('guess');
+    $('redoCopy').onclick=()=>show('listen');
+    $('replayOrig').onclick=()=>Sound.play(turn.originalRev);
+  },
+  guess(){
+    bindPlayer('copy',()=>turn.copyRev,()=>{$('revealAnswer').disabled=false;});
+    $('revealAnswer').onclick=()=>show('verdict');
+  },
+  verdict(){
+    $('gotIt').onclick=()=>score(true);
+    $('missed').onclick=()=>score(false);
+    $('replayCopy').onclick=()=>Sound.play(turn.copyRev);
+  },
+  win(){
+    $('again').onclick=()=>{game.players.forEach(p=>p.score=0);game.current=0;save();show('handoff',{note:'Rematch!'});};
+    $('fresh').onclick=()=>{game=null;save();show('count');};
+  }
+};
+
+function collectNames(){return [...stage.querySelectorAll('.names input')].map(i=>i.value.trim().slice(0,18));}
+
+async function startTurn(){
+  turn=null;
+  if(!Celebs.ready())show('loading');
+  try{
+    await Celebs.load(p=>{const t=$('loadText');if(t)t.textContent=`Fetching popular names from Wikipedia… ${Math.round(p*100)}%`;});
+    const celeb=await Celebs.next();
+    turn={celeb,original:null,originalRev:null,copy:null,copyRev:null};
+    show('say');
+  }catch(err){
+    show('loadError',{error:err?.message||String(err)});
+  }
+}
+
+function score(correct){
+  const who=recorder();
+  if(correct)who.score++;
+  if(who.score>=WIN){
+    // Finished games aren't offered for resume; the players stay in memory for a rematch.
+    try{localStorage.removeItem(KEYS.save);}catch(_){}
+    show('win',{winner:who.name});return;
+  }
+  game.current=(game.current+1)%game.players.length;
+  save();
+  toast(correct?`+1 point to ${who.name}!`:'No points this time');
+  show('handoff',{note:correct?`${who.name} scores!`:'Next turn'});
+}
+
+/* ---------- Recording + playback widgets ---------- */
+function bindRecord(onDone){
+  const btn=$('recBtn'),label=btn.textContent;
+  btn.onclick=async()=>{
+    if(recording){finishRecording();return;}
+    $('recMsg').innerHTML='';
+    btn.disabled=true;btn.textContent='Allow the microphone…';
+    const rec={onDone,label,btn,started:0,timer:0};
+    recording=rec;
+    try{
+      await Sound.start(peak=>{const l=$('recLevel');if(l)l.style.width=Math.min(100,peak*140)+'%';});
+    }catch(err){
+      recording=null;btn.disabled=false;btn.textContent=label;
+      micError(err);return;
+    }
+    if(recording!==rec){Sound.release();return;}
+    rec.started=performance.now();
+    btn.disabled=false;btn.textContent='■ Stop recording';btn.classList.add('on');
+    $('recInfo').hidden=false;
+    rec.timer=setInterval(()=>{
+      const s=(performance.now()-rec.started)/1000;
+      const t=$('recTime');if(t)t.textContent=`${s.toFixed(1)}s / ${MAX_SECONDS}s`;
+      if(s>=MAX_SECONDS)finishRecording();
+    },100);
+  };
+}
+function finishRecording(){
+  const rec=recording;if(!rec)return;
+  recording=null;clearInterval(rec.timer);
+  const buf=Sound.stop();
+  rec.btn.classList.remove('on');rec.btn.textContent=rec.label;
+  $('recInfo').hidden=true;
+  if(!buf){$('recMsg').innerHTML='<div class="msg error">Didn\'t catch that. Hold the phone closer and speak up, then try again.</div>';return;}
+  rec.onDone(buf);
+}
+function cancelRecording(){const rec=recording;recording=null;clearInterval(rec.timer);Sound.release();}
+function micError(err){
+  const name=err?.name;
+  const text=name==='NotAllowedError'||name==='SecurityError'
+    ?'Microphone access was blocked. Allow the microphone for this site in your browser settings, then try again.'
+    :name==='NotFoundError'?'No microphone was found on this device.'
+    :name==='NotSupportedError'?(err.message||'Recording is not supported in this browser.')
+    :'Couldn\'t start the microphone: '+(err?.message||name||'unknown error');
+  $('recMsg').innerHTML=`<div class="msg error">${esc(text)}</div>`;
+}
+
+function bindPlayer(id,getBuf,onFirstPlay){
+  const canvas=$(id+'Wave'),btn=$(id+'Play'),label=btn.textContent;
+  let entry=null,raf=0;
+  const draw=()=>drawWave(canvas,getBuf(),entry?Sound.progress(entry):0);
+  draw();
+  const ro=new ResizeObserver(draw);ro.observe(canvas);
+  btn.onclick=()=>{
+    if(entry&&Sound.isPlaying(entry)){Sound.stopPlayback();return;}
+    entry=Sound.play(getBuf(),()=>{cancelAnimationFrame(raf);btn.textContent=label;entry=null;draw();});
+    btn.textContent='■ Stop';
+    onFirstPlay?.();onFirstPlay=null;
+    const loop=()=>{draw();if(entry)raf=requestAnimationFrame(loop);};loop();
+  };
+}
+function drawWave(canvas,buf,progress){
+  if(!canvas||!buf||!canvas.isConnected)return;
+  const dpr=Math.min(2,window.devicePixelRatio||1),w=canvas.clientWidth,h=canvas.clientHeight;
+  if(!w)return;
+  if(canvas.width!==Math.round(w*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}
+  const g=canvas.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const data=buf.getChannelData(0),bars=Math.max(20,Math.floor(w/6)),step=Math.floor(data.length/bars)||1;
+  for(let b=0;b<bars;b++){
+    let peak=0;for(let i=b*step,e=Math.min(data.length,i+step);i<e;i+=8){const v=Math.abs(data[i]);if(v>peak)peak=v;}
+    const bh=Math.max(3,peak*(h-14)),x=b*(w/bars)+1;
+    g.fillStyle=b/bars<progress?'#c0f96a':'#3b4766';
+    g.beginPath();g.roundRect?g.roundRect(x,(h-bh)/2,Math.max(2,w/bars-3),bh,2):g.rect(x,(h-bh)/2,Math.max(2,w/bars-3),bh);g.fill();
+  }
+}
+
+let toastTimer=0;
+function toast(text){
+  document.querySelector('.toast')?.remove();clearTimeout(toastTimer);
+  const t=document.createElement('div');t.className='toast';t.role='status';t.textContent=text;document.body.appendChild(t);
+  toastTimer=setTimeout(()=>t.remove(),2200);
+}
+
+$('quitBtn').onclick=()=>{
+  if(!confirm('End this game and start a new one? Scores will be lost.'))return;
+  game=null;save();turn=null;show('count');
+};
+window.addEventListener('pagehide',()=>{if(recording)cancelRecording();});
+
+/* ---------- How to play ---------- */
+(()=>{
+  const dialog=$('guide'),pages=[...dialog.querySelectorAll('[data-step]')],bars=[...$('guideProgress').children];
+  const steps=[
+    {title:'Say it. Flip it. Copy it.',lead:'A backwards-talking party game for 2 or more players on one phone.',note:'Tap Next to see a turn in action.'},
+    {title:'A turn, step by step.',lead:'Here\'s how one name travels from you to the next player.',note:'The closer your copy, the easier the guess.'},
+    {title:'Score points.',lead:'You score when the next player works out your celebrity.',note:'First to 10 wins.'},
+    {title:'Tips for great copies.',lead:'A few things that make Reverse more fun.',note:'Ready? Grab some friends.'}
+  ];
+  let step=0,firstVisit=!readJSON(KEYS.seen,false);
+  function display(i){
+    step=Math.max(0,Math.min(3,i));
+    $('guideTitle').textContent=steps[step].title;$('guideLead').textContent=steps[step].lead;$('guideNote').textContent=steps[step].note;
+    $('guideCount').textContent=`STEP ${step+1} OF 4`;
+    pages.forEach((p,n)=>p.hidden=n!==step);bars.forEach((b,n)=>b.classList.toggle('active',n<=step));
+    $('guideBack').hidden=step===0;$('guideNext').textContent=step===3?'Let\'s play →':'Next →';
+    dialog.scrollTop=0;$('guideTitle').focus({preventScroll:true});
+  }
+  function open(){if(dialog.open)return;dialog.showModal();display(0);}
+  function close(){writeJSON(KEYS.seen,true);firstVisit=false;dialog.close();}
+  $('helpBtn').onclick=open;
+  $('guideBack').onclick=()=>display(step-1);
+  $('guideNext').onclick=()=>step<3?display(step+1):close();
+  dialog.addEventListener('cancel',e=>{if(firstVisit)e.preventDefault();});
+  if(firstVisit)open();
+})();
+
+show('count');
+})();
+</script>
+</body>
+</html>
