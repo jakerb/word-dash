@@ -1,10 +1,24 @@
-# Word Dash
+# Word Dash — word games
+
+[word-dash.site](https://word-dash.site/) hosts a collection of browser word games. The homepage (`/index.html`) lists every game; each game lives in its own subfolder.
+
+| Game | Folder | URL |
+| --- | --- | --- |
+| Word Dash | `word-dash/` | https://word-dash.site/word-dash/ |
+
+To add a game: create a new subfolder with its own `index.html` (use relative paths), then add a card for it to the list in the root `index.html`. If the game uses a service worker, register it with a scope limited to its folder and give its caches a unique name prefix.
+
+Legacy invite links that point to the root (`/?join=CODE`) are redirected to `/word-dash/?join=CODE`. The root `sw.js` is a retired worker that unregisters the old root-scoped install from before the move.
+
+---
+
+## Word Dash
 
 A fast two-player word-guessing game with consecutive alphabet letters, a countdown, live API words, difficulty modes, and optional real-time multiplayer.
 
-## How to play
+### How to play
 
-1. Open [Word Dash](https://word-dash.site/). First-time players see a **four-step How to play guide**: the goal, controls and timer, clue-giving tips, and choosing One Device or Duo. Use **Back** and **Next** to navigate; finishing opens the game-mode selector. The modal opens at the top and won't auto-appear after you've completed it on that device. Reopen it using **How to play** on the mode picker or the **📖 / ❔** buttons in the game.
+1. Open [Word Dash](https://word-dash.site/word-dash/). First-time players see a **four-step How to play guide**: the goal, controls and timer, clue-giving tips, and choosing One Device or Duo. Use **Back** and **Next** to navigate; finishing opens the game-mode selector. The modal opens at the top and won't auto-appear after you've completed it on that device. Reopen it using **How to play** on the mode picker or the **📖 / ❔** buttons in the game.
 2. Choose **Play on one device**, **Create a two-player room** or **Join room**.
 3. For a two-device game, the host creates a room and taps **Share invite** to open the phone or tablet's native share sheet (Messages, WhatsApp, AirDrop, etc.). The invite includes the room URL and code. **Copy invite** remains available, and is used as a fallback if native sharing is unsupported.
 4. Both players choose their role for the round: **Describer** or **Guesser**. The selections must be different.
@@ -19,7 +33,7 @@ The original one-device mode remains available. Words are sourced from the [Data
 
 The audio button uses the shorter labels **Mute** and **Unmute** (for countdown beeps and spoken letters).
 
-## Technical design
+### Technical design
 
 The site runs entirely on **GitHub Pages**, which is static hosting and does not host WebSocket servers. Multiplayer uses **PeerJS 1.5.5** and encrypted **WebRTC data channels** between browsers. The public PeerJS Cloud handles signalling so no separate Word Dash backend is required for casual sessions. The host is authoritative: it generates the words, advances the letter, maintains the countdown, and sends synchronised state to the guest. A guest who is guessing is **not sent the answers** before the result screen.
 
@@ -27,14 +41,14 @@ The room code is an unguessable random eight-character string. Rooms are ephemer
 
 **Networking:** Duo works over the internet, so both devices must have an active network connection. It works whether the devices are on the same Wi-Fi or on different networks. **Reliability caveat:** the free PeerJS Cloud is a shared public service and is not guaranteed. Some restrictive networks may block peer-to-peer connections. For production-grade matchmaking or reconnection guarantees, switch to a managed realtime backend or self-hosted PeerServer with TURN support.
 
-## PWA and updates
+### PWA and updates
 
 Install from your browser's **Add to Home Screen** or **Install App** option. The app uses a network-first service worker to fetch newly deployed GitHub Pages versions. Code updates are checked regularly and deferred during an active multiplayer game so nobody is disconnected by an automatic refresh. Multiplayer requires an internet connection, but previously cached solo screens may be usable offline (new API words still require connectivity).
 
-## GitHub Pages
+### GitHub Pages
 
-Under **Settings → Pages**, select **Deploy from a branch → main → /(root)**. The game is available on the custom domain:
+Under **Settings → Pages**, select **Deploy from a branch → main → /(root)**. The site is available on the custom domain:
 
-https://word-dash.site/
+https://word-dash.site/ (games list) — Word Dash itself is at https://word-dash.site/word-dash/
 
 No build step or API key is required for the current setup. Future changes to Datamuse's API terms or PeerJS Cloud availability may require configuration or another provider.
